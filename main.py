@@ -48,7 +48,7 @@ yt_dl_opts = {
         'Accept-Language': 'en-us,en;q=0.5',
         'Sec-Fetch-Mode': 'navigate'
     },
-    'cookies': None,
+    'cookies': 'youtube_cookies.txt',
     'extractor_retries': 5,
     'fragment_retries': 5,
     'retries': 5,
@@ -163,6 +163,11 @@ async def on_message(message):
     if message.content == 'صوت':
         await test_voice_connection(message)
         return
+        
+    # أمر اختبار YouTube
+    if message.content == 'يوتيوب':
+        await test_youtube_connection(message)
+        return
 
 async def play_song(message):
     """تشغيل الأغنية"""
@@ -229,7 +234,7 @@ async def play_song(message):
                     alt_opts['http_headers'] = {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                     }
-                    alt_opts['cookies'] = None
+                    alt_opts['cookies'] = 'youtube_cookies.txt'
                     alt_opts['extractor_retries'] = 5
                     alt_opts['fragment_retries'] = 5
                     alt_opts['retries'] = 5
@@ -259,6 +264,7 @@ async def play_song(message):
                                 'DNT': '1',
                                 'Upgrade-Insecure-Requests': '1'
                             },
+                            'cookies': 'youtube_cookies.txt',
                             'extractor_retries': 10,
                             'fragment_retries': 10,
                             'retries': 10,
@@ -605,6 +611,44 @@ async def test_voice_connection(message):
                                          "4. تحقق من إعدادات الجدار الناري")
             else:
                 await message.channel.send(f"❌ فشل الاتصال: {str(e)}")
+                
+    except Exception as e:
+        await message.channel.send(f"❌ خطأ في الاختبار: {str(e)}")
+
+async def test_youtube_connection(message):
+    """اختبار الاتصال بـ YouTube"""
+    try:
+        await message.channel.send("🔍 جاري اختبار الاتصال بـ YouTube...")
+        
+        # اختبار بسيط مع yt-dlp
+        test_opts = {
+            'format': 'bestaudio/best',
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': True,
+            'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'cookies': 'youtube_cookies.txt'
+        }
+        
+        try:
+            with yt_dlp.YoutubeDL(test_opts) as ydl:
+                # اختبار مع فيديو قصير
+                info = ydl.extract_info("https://www.youtube.com/watch?v=dQw4w9WgXcQ", download=False)
+                if info:
+                    await message.channel.send("✅ **تم الاتصال بـ YouTube بنجاح!** 🎉")
+                else:
+                    await message.channel.send("⚠️ الاتصال يعمل لكن لا يمكن استخراج المعلومات")
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "sign in to confirm" in error_msg or "bot" in error_msg:
+                await message.channel.send("❌ **YouTube يكتشف البوت!**\n\n"
+                                         "🔧 **الحلول المقترحة:**\n"
+                                         "1. جرب البحث مرة أخرى\n"
+                                         "2. استخدم رابط مباشر بدلاً من البحث\n"
+                                         "3. انتظر قليلاً ثم جرب مرة أخرى\n"
+                                         "4. البوت يحاول طرق بديلة تلقائياً")
+            else:
+                await message.channel.send(f"❌ خطأ في الاتصال: {str(e)}")
                 
     except Exception as e:
         await message.channel.send(f"❌ خطأ في الاختبار: {str(e)}")

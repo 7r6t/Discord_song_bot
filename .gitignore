@@ -46,4 +46,8 @@ Thumbs.db
 
 # ملفات مؤقتة
 *.tmp
-*.temp 
+*.temp
+
+# ملفات cookies
+youtube_cookies.txt
+*.cookies 
