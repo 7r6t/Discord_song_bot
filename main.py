@@ -246,25 +246,67 @@ async def play_song(message):
             fast_opts['no_warnings'] = False  # نريد رؤية التحذيرات
             fast_opts['extract_flat'] = False  # نحتاج معلومات كاملة للتشغيل
             fast_opts['verbose'] = True  # تفاصيل أكثر
+            fast_opts['ignoreerrors'] = True  # تجاهل بعض الأخطاء
+            fast_opts['no_check_certificate'] = True  # تجاهل شهادات SSL
+            fast_opts['prefer_insecure'] = True  # تفضيل الاتصال غير الآمن
             
             # إضافة رسالة تأكيد
             await message.channel.send("🔍 جاري البحث باستخدام Cookies...")
             
             with yt_dlp.YoutubeDL(fast_opts) as ydl:
                 # البحث في YouTube
+                # البحث في YouTube مع معالجة أفضل
                 search_query = f"ytsearch1:{song_name}"  # نتيجة واحدة فقط
+                # محاولة البحث المباشر أولاً
+                direct_search = song_name
                 await message.channel.send(f"🔍 جاري البحث عن: {search_query}")
                 try:
+                    # محاولة البحث مع معالجة أفضل للأخطاء
                     info = ydl.extract_info(search_query, download=False)
-                    if info and 'entries' in info and info['entries']:
-                        video_info = info['entries'][0]
-                        await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
-                    else:
+                    
+                    # التحقق من صحة البيانات
+                    if not info:
+                        await message.channel.send("❌ لم يتم الحصول على معلومات البحث!")
+                        return
+                    
+                    if 'entries' not in info:
+                        await message.channel.send("❌ لم يتم العثور على نتائج البحث!")
+                        return
+                    
+                    if not info['entries']:
                         await message.channel.send("❌ لم يتم العثور على الأغنية!")
                         return
+                    
+                    video_info = info['entries'][0]
+                    if not video_info:
+                        await message.channel.send("❌ لم يتم العثور على معلومات الفيديو!")
+                        return
+                    
+                    await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
+                    
                 except Exception as search_error:
-                    await message.channel.send(f"❌ خطأ في البحث: {str(search_error)}")
-                    return
+                    error_msg = str(search_error)
+                    await message.channel.send(f"❌ خطأ في البحث: {error_msg}")
+                    
+                    # محاولة البحث المباشر
+                    try:
+                        await message.channel.send("🔄 المحاولة الثانية: البحث المباشر...")
+                        direct_info = ydl.extract_info(direct_search, download=False)
+                        
+                        if direct_info and 'title' in direct_info:
+                            video_info = direct_info
+                            await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
+                        else:
+                            await message.channel.send("❌ فشل البحث المباشر أيضاً!")
+                            return
+                            
+                    except Exception as direct_error:
+                        await message.channel.send(f"❌ فشل البحث المباشر: {str(direct_error)}")
+                        
+                        # إذا كان الخطأ يتعلق بـ cookies
+                        if "cookies" in error_msg.lower():
+                            await message.channel.send("🔧 **مشكلة في Cookies!**\nاستخدم أمر `كوكيز` لاختبار Cookies")
+                        return
         except Exception as e:
             error_msg = str(e).lower()
             if "certificate" in error_msg or "ssl" in error_msg:
