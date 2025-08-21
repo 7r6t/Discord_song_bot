@@ -21,51 +21,65 @@ bot = commands.Bot(command_prefix='', intents=intents)
 
 # متغيرات عامة
 voice_clients = {}
+
 yt_dl_opts = {
-    'format': 'bestaudio[ext=m4a]/bestaudio/best',
-    'extractaudio': True,
-    'audioformat': 'm4a',
-    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-    'restrictfilenames': True,
-    'noplaylist': True,
-    'nocheckcertificate': True,
-    'ignoreerrors': False,
-    'logtostderr': False,
-    'quiet': True,
-    'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0',
-    'no_check_certificate': True,
-    'prefer_insecure': True,
-    'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'cookiesfrombrowser': None,  # تعطيل cookies من المتصفح
-    'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
-    'geo_bypass': True,
-    'geo_bypass_country': 'US',
-    'geo_bypass_ip_block': '1.1.1.1',
-    'force_generic_extractor': False,
-    'http_headers': {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-us,en;q=0.5',
-        'Sec-Fetch-Mode': 'navigate',
-        'DNT': '1',
-        'Upgrade-Insecure-Requests': '1',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive'
-    },
-    'cookies': 'youtube_cookies.txt',
-    'extractor_retries': 10,
-    'fragment_retries': 10,
-    'retries': 10,
-    'sleep_interval': 2,
-    'max_sleep_interval': 10,
-    'sleep_interval_requests': 2,
-    'socket_timeout': 30,
-    'max_downloads': 1,
-    'nocheckcertificate': True,
-    'prefer_ffmpeg': True
-}
+                'format': 'bestaudio[ext=m4a]/bestaudio/best',
+                'extractaudio': True,
+                'audioformat': 'm4a',
+                'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
+                'restrictfilenames': True,
+                'noplaylist': True,
+                'nocheckcertificate': True,
+                'ignoreerrors': False,
+                'logtostderr': False,
+                'quiet': True,
+                'no_warnings': True,
+                'default_search': 'auto',
+                'source_address': '0.0.0.0',
+                'no_check_certificate': True,
+                'prefer_insecure': True,
+                'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'cookiesfrombrowser': None,
+                'cookies': 'youtube_cookies.txt',
+                'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
+                'geo_bypass': True,
+                'geo_bypass_country': 'US',
+                'geo_bypass_ip_block': '1.1.1.1',
+                'force_generic_extractor': False,
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-us,en;q=0.5',
+                    'Sec-Fetch-Mode': 'navigate',
+                    'DNT': '1',
+                    'Upgrade-Insecure-Requests': '1',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Connection': 'keep-alive',
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                },
+                'extractor_retries': 15,
+                'fragment_retries': 15,
+                'retries': 15,
+                'sleep_interval': 3,
+                'max_sleep_interval': 15,
+                'sleep_interval_requests': 3,
+                'socket_timeout': 60,
+                'max_downloads': 1,
+                'nocheckcertificate': True,
+                'prefer_ffmpeg': True,
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'm4a',
+                    'preferredquality': '192',
+                }],
+                'writesubtitles': False,
+                'writeautomaticsub': False,
+                'skip_download': False,
+                'nocheckcertificate': True,
+                'prefer_insecure': True,
+                'http_chunk_size': 10485760
+            }
 
 ffmpeg_options = {
     'options': '-vn -b:a 128k',
@@ -256,13 +270,20 @@ async def play_song(message):
                     alt_opts['extract_flat'] = False
                     alt_opts['format'] = 'bestaudio/best'
                     alt_opts['http_headers'] = {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                        'Accept-Language': 'en-us,en;q=0.5',
+                        'Sec-Fetch-Mode': 'navigate',
+                        'DNT': '1',
+                        'Upgrade-Insecure-Requests': '1'
                     }
-                    alt_opts['cookiesfrombrowser'] = None  # تعطيل cookies من المتصفح
+                    alt_opts['cookiesfrombrowser'] = None
                     alt_opts['cookies'] = 'youtube_cookies.txt'
-                    alt_opts['extractor_retries'] = 5
-                    alt_opts['fragment_retries'] = 5
-                    alt_opts['retries'] = 5
+                    alt_opts['extractor_retries'] = 10
+                    alt_opts['fragment_retries'] = 10
+                    alt_opts['retries'] = 10
+                    alt_opts['sleep_interval'] = 2
+                    alt_opts['max_sleep_interval'] = 10
                     
                     with yt_dlp.YoutubeDL(alt_opts) as ydl:
                         info = ydl.extract_info(search_query, download=False)
