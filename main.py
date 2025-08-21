@@ -41,7 +41,7 @@ yt_dl_opts = {
                 'cookiesfrombrowser': None,
                 'cookies': 'youtube_cookies.txt',
                 'cookiefile': 'youtube_cookies.txt',
-                'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
+                'extractor_args': {'youtube': {'skip': ['dash', 'live'], 'player_client': ['android', 'web']}},
                 'geo_bypass': True,
                 'geo_bypass_country': 'US',
                 'geo_bypass_ip_block': '1.1.1.1/24',
@@ -249,6 +249,8 @@ async def play_song(message):
             fast_opts['ignoreerrors'] = True  # تجاهل بعض الأخطاء
             fast_opts['no_check_certificate'] = True  # تجاهل شهادات SSL
             fast_opts['prefer_insecure'] = True  # تفضيل الاتصال غير الآمن
+            fast_opts['extract_flat'] = True  # استخراج مسطح للبحث
+            fast_opts['skip_download'] = True  # تخطي التحميل
             
             # إضافة رسالة تأكيد
             await message.channel.send("🔍 جاري البحث باستخدام Cookies...")
@@ -259,6 +261,8 @@ async def play_song(message):
                 search_query = f"ytsearch1:{song_name}"  # نتيجة واحدة فقط
                 # محاولة البحث المباشر أولاً
                 direct_search = song_name
+                # محاولة البحث بدون ytsearch
+                simple_search = song_name
                 await message.channel.send(f"🔍 جاري البحث عن: {search_query}")
                 try:
                     # محاولة البحث مع معالجة أفضل للأخطاء
@@ -303,10 +307,25 @@ async def play_song(message):
                     except Exception as direct_error:
                         await message.channel.send(f"❌ فشل البحث المباشر: {str(direct_error)}")
                         
-                        # إذا كان الخطأ يتعلق بـ cookies
-                        if "cookies" in error_msg.lower():
-                            await message.channel.send("🔧 **مشكلة في Cookies!**\nاستخدم أمر `كوكيز` لاختبار Cookies")
-                        return
+                        # محاولة ثالثة: البحث البسيط
+                        try:
+                            await message.channel.send("🔄 المحاولة الثالثة: البحث البسيط...")
+                            simple_info = ydl.extract_info(simple_search, download=False)
+                            
+                            if simple_info and 'title' in simple_info:
+                                video_info = simple_info
+                                await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
+                            else:
+                                await message.channel.send("❌ فشل البحث البسيط أيضاً!")
+                                return
+                                
+                        except Exception as simple_error:
+                            await message.channel.send(f"❌ فشل البحث البسيط: {str(simple_error)}")
+                            
+                            # إذا كان الخطأ يتعلق بـ cookies
+                            if "cookies" in error_msg.lower():
+                                await message.channel.send("🔧 **مشكلة في Cookies!**\nاستخدم أمر `كوكيز` لاختبار Cookies")
+                            return
         except Exception as e:
             error_msg = str(e).lower()
             if "certificate" in error_msg or "ssl" in error_msg:
