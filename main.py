@@ -49,9 +49,12 @@ yt_dl_opts = {
         'Sec-Fetch-Mode': 'navigate'
     },
     'cookies': None,
-    'extractor_retries': 3,
-    'fragment_retries': 3,
-    'retries': 3
+    'extractor_retries': 5,
+    'fragment_retries': 5,
+    'retries': 5,
+    'sleep_interval': 1,
+    'max_sleep_interval': 5,
+    'sleep_interval_requests': 1
 }
 
 ffmpeg_options = {
@@ -240,16 +243,32 @@ async def play_song(message):
                             await message.channel.send("❌ لم يتم العثور على الأغنية!")
                             return
                 except Exception as e2:
-                    # محاولة أخيرة مع إعدادات بسيطة
+                    # محاولة أخيرة مع إعدادات متقدمة لحل مشكلة YouTube
                     try:
-                        simple_opts = {
+                        advanced_opts = {
                             'format': 'bestaudio/best',
                             'quiet': True,
                             'no_warnings': True,
                             'extract_flat': False,
-                            'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                            'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'http_headers': {
+                                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                                'Accept-Language': 'en-us,en;q=0.5',
+                                'Sec-Fetch-Mode': 'navigate',
+                                'DNT': '1',
+                                'Upgrade-Insecure-Requests': '1'
+                            },
+                            'extractor_retries': 10,
+                            'fragment_retries': 10,
+                            'retries': 10,
+                            'sleep_interval': 2,
+                            'max_sleep_interval': 10,
+                            'sleep_interval_requests': 2,
+                            'geo_bypass': True,
+                            'geo_bypass_country': 'US'
                         }
-                        with yt_dlp.YoutubeDL(simple_opts) as ydl:
+                        with yt_dlp.YoutubeDL(advanced_opts) as ydl:
                             info = ydl.extract_info(search_query, download=False)
                             if 'entries' in info and info['entries']:
                                 video_info = info['entries'][0]
@@ -258,7 +277,7 @@ async def play_song(message):
                                 await message.channel.send("❌ لم يتم العثور على الأغنية!")
                                 return
                     except Exception as e3:
-                        await message.channel.send(f"❌ خطأ في البحث: لا يمكن الوصول إلى YouTube")
+                        await message.channel.send(f"❌ خطأ في البحث: لا يمكن الوصول إلى YouTube\n\n🔧 **المشكلة:** YouTube يكتشف البوت\n\n💡 **الحل:** جرب البحث مرة أخرى أو استخدم رابط مباشر")
                         return
             else:
                 await message.channel.send(f"❌ خطأ في البحث: {str(e)}")
@@ -595,15 +614,29 @@ def start_keep_alive():
     def keep_alive_loop():
         while True:
             try:
-                # إرسال ping كل 30 ثانية
-                time.sleep(30)
+                # إرسال ping كل 20 ثانية
+                time.sleep(20)
                 print("🔄 Keep Alive: البوت يعمل...")
+                
+                # إرسال ping للخادم إذا كان متاحاً
+                try:
+                    import requests
+                    keep_alive_url = os.getenv('KEEP_ALIVE_URL')
+                    if keep_alive_url:
+                        response = requests.get(f"{keep_alive_url}/ping", timeout=5)
+                        if response.status_code == 200:
+                            print("✅ Keep Alive: تم إرسال ping بنجاح")
+                        else:
+                            print(f"⚠️ Keep Alive: Status {response.status_code}")
+                except:
+                    pass  # تجاهل أخطاء ping
+                    
             except Exception as e:
                 print(f"❌ Keep Alive Error: {e}")
     
     keep_alive_thread = threading.Thread(target=keep_alive_loop, daemon=True)
     keep_alive_thread.start()
-    print("🚀 Keep Alive started in background thread")
+    print("🚀 Keep Alive started in background thread (every 20 seconds)")
     return keep_alive_thread
 
 # تشغيل البوت
