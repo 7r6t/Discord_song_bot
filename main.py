@@ -288,8 +288,10 @@ async def play_song(message):
                     title = video_info.get('title', 'أغنية')
                     duration = video_info.get('duration', 0)
                     await message.channel.send(f"✅ تم العثور على: **{title}**")
+                    await message.channel.send("🔗 جاري الاتصال بالقناة الصوتية...")
                 else:
                     await message.channel.send("❌ لم يتم العثور على الأغنية!")
+                    await message.channel.send("💡 **نصائح:**\n• تأكد من كتابة اسم الأغنية بشكل صحيح\n• جرب كلمات مختلفة\n• تأكد من وجود اتصال إنترنت")
                     return
                     
             except asyncio.TimeoutError:
@@ -357,25 +359,57 @@ def search_youtube(query, opts):
     """البحث في YouTube مع معالجة الأخطاء"""
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
-            # البحث المباشر أولاً
-            try:
-                search_results = ydl.extract_info(f"ytsearch1:{query}", download=False)
-                if search_results and 'entries' in search_results and search_results['entries']:
-                    return search_results['entries'][0]
-            except:
-                pass
+            print(f"🔍 البحث عن: {query}")
             
-            # محاولة بديلة
+            # محاولة 1: البحث باستخدام ytsearch
             try:
-                info = ydl.extract_info(query, download=False)
-                return info
-            except:
-                pass
+                print("🔍 المحاولة 1: ytsearch")
+                search_results = ydl.extract_info(f"ytsearch1:{query}", download=False)
+                print(f"نتائج البحث: {search_results}")
                 
+                if search_results and 'entries' in search_results and search_results['entries']:
+                    first_result = search_results['entries'][0]
+                    print(f"تم العثور على: {first_result.get('title', 'بدون عنوان')}")
+                    return first_result
+                else:
+                    print("لا توجد نتائج في ytsearch")
+            except Exception as e1:
+                print(f"خطأ في ytsearch: {e1}")
+            
+            # محاولة 2: البحث المباشر
+            try:
+                print("🔍 المحاولة 2: البحث المباشر")
+                info = ydl.extract_info(query, download=False)
+                print(f"نتيجة البحث المباشر: {info}")
+                
+                if info and 'title' in info:
+                    print(f"تم العثور على: {info.get('title', 'بدون عنوان')}")
+                    return info
+                else:
+                    print("لا توجد نتائج في البحث المباشر")
+            except Exception as e2:
+                print(f"خطأ في البحث المباشر: {e2}")
+            
+            # محاولة 3: البحث باستخدام ytsearch5
+            try:
+                print("🔍 المحاولة 3: ytsearch5")
+                search_results = ydl.extract_info(f"ytsearch5:{query}", download=False)
+                print(f"نتائج ytsearch5: {search_results}")
+                
+                if search_results and 'entries' in search_results and search_results['entries']:
+                    first_result = search_results['entries'][0]
+                    print(f"تم العثور على: {first_result.get('title', 'بدون عنوان')}")
+                    return first_result
+                else:
+                    print("لا توجد نتائج في ytsearch5")
+            except Exception as e3:
+                print(f"خطأ في ytsearch5: {e3}")
+                
+        print("❌ فشلت جميع محاولات البحث")
         return None
         
     except Exception as e:
-        print(f"خطأ في البحث: {e}")
+        print(f"❌ خطأ عام في البحث: {e}")
         return None
 
 async def skip_song(message):
