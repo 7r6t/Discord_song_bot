@@ -360,19 +360,26 @@ async def play_song(message):
         await message.channel.send(f"❌ خطأ عام في تشغيل الأغنية: {str(e)}")
 
 def search_youtube(query, opts):
-    """البحث في YouTube - الحل البسيط والمضمون 100%"""
+    """البحث في YouTube و SoundCloud - الحل الشامل"""
     try:
         print(f"🔍 البحث عن: {query}")
         
-        # الحل البسيط: البحث باستخدام YouTube API مباشرة
-        print("🔍 الحل البسيط: YouTube API مباشر")
+        # محاولة 1: البحث في SoundCloud (الأسهل)
+        print("🔍 المحاولة 1: SoundCloud")
+        sc_result = search_soundcloud(query)
+        if sc_result:
+            print(f"✅ تم العثور على SoundCloud: {sc_result.get('title', 'بدون عنوان')}")
+            return sc_result
+        
+        # محاولة 2: YouTube API مباشر
+        print("🔍 المحاولة 2: YouTube API مباشر")
         api_result = search_youtube_api(query)
         if api_result:
-            print(f"✅ تم العثور على: {api_result.get('title', 'بدون عنوان')}")
+            print(f"✅ تم العثور على YouTube: {api_result.get('title', 'بدون عنوان')}")
             return api_result
         
-        # إذا فشل API، جرب yt-dlp مع إعدادات بسيطة
-        print("🔍 المحاولة البديلة: yt-dlp بسيط")
+        # محاولة 3: yt-dlp مع إعدادات بسيطة
+        print("🔍 المحاولة 3: yt-dlp بسيط")
         simple_opts = {
             'format': 'bestaudio',
             'quiet': True,
@@ -383,19 +390,63 @@ def search_youtube(query, opts):
         
         with yt_dlp.YoutubeDL(simple_opts) as ydl:
             try:
-                # البحث المباشر
-                info = ydl.extract_info(query, download=False)
-                if info and 'title' in info:
-                    print(f"✅ تم العثور على: {info.get('title', 'بدون عنوان')}")
-                    return info
+                # البحث في SoundCloud أولاً
+                sc_query = f"scsearch:{query}"
+                info = ydl.extract_info(sc_query, download=False)
+                if info and 'entries' in info and info['entries']:
+                    first_result = info['entries'][0]
+                    print(f"✅ تم العثور على SoundCloud: {first_result.get('title', 'بدون عنوان')}")
+                    return first_result
             except Exception as e:
-                print(f"❌ خطأ في yt-dlp: {e}")
+                print(f"❌ خطأ في SoundCloud: {e}")
+            
+            try:
+                # البحث في YouTube
+                yt_query = f"ytsearch:{query}"
+                info = ydl.extract_info(yt_query, download=False)
+                if info and 'entries' in info and info['entries']:
+                    first_result = info['entries'][0]
+                    print(f"✅ تم العثور على YouTube: {first_result.get('title', 'بدون عنوان')}")
+                    return first_result
+            except Exception as e:
+                print(f"❌ خطأ في YouTube: {e}")
         
-        print("❌ فشل البحث")
+        print("❌ فشل البحث في جميع المصادر")
         return None
         
     except Exception as e:
         print(f"❌ خطأ عام في البحث: {e}")
+        return None
+
+def search_soundcloud(query):
+    """البحث في SoundCloud مباشرة"""
+    try:
+        print(f"🔍 البحث في SoundCloud: {query}")
+        
+        # استخدام yt-dlp للبحث في SoundCloud
+        sc_opts = {
+            'format': 'bestaudio',
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': False,
+            'skip_download': True
+        }
+        
+        with yt_dlp.YoutubeDL(sc_opts) as ydl:
+            # البحث في SoundCloud
+            sc_query = f"scsearch:{query}"
+            info = ydl.extract_info(sc_query, download=False)
+            
+            if info and 'entries' in info and info['entries']:
+                first_result = info['entries'][0]
+                print(f"✅ SoundCloud: {first_result.get('title', 'بدون عنوان')}")
+                return first_result
+            else:
+                print("❌ لا توجد نتائج في SoundCloud")
+                return None
+                
+    except Exception as e:
+        print(f"❌ خطأ في SoundCloud: {e}")
         return None
 
 def search_youtube_api(query):
@@ -444,7 +495,7 @@ def search_youtube_api(query):
         return None
         
     except Exception as e:
-        print(f"خطأ في YouTube API: {e}")
+        print(f"❌ خطأ في YouTube API: {e}")
         return None
 
 async def skip_song(message):
