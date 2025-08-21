@@ -98,8 +98,8 @@ yt_dl_opts = {
 
 # إعدادات FFmpeg محسنة لـ SoundCloud و YouTube
 ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn -filter:a "volume=0.5"'
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -protocol_whitelist file,http,https,tcp,tls,crypto',
+    'options': '-vn -filter:a "volume=0.8,highpass=f=200,lowpass=f=3000"'
 }
 
 # Flask app للـ Keep Alive
@@ -463,7 +463,6 @@ async def play_song(message):
                 success_embed.add_field(name="⏱️ المدة", value=duration_str, inline=True)
                 await message.channel.send(embed=success_embed)
                 
-                await message.channel.send("🔗 جاري الاتصال بالقناة الصوتية...")
                     
         except Exception as e:
             await message.channel.send(f"❌ خطأ في البحث: {str(e)[:100]}...")
@@ -471,38 +470,27 @@ async def play_song(message):
 
         # الاتصال بالقناة الصوتية
         try:
-            await message.channel.send("🔗 جاري الاتصال بالقناة الصوتية...")
-            
             if guild_id in voice_clients:
                 voice_client = voice_clients[guild_id]
                 if voice_client.is_connected():
                     if voice_client.channel != voice_channel:
-                        await message.channel.send("🔄 نقل البوت إلى القناة الصوتية...")
                         await voice_client.move_to(voice_channel)
                     else:
-                        await message.channel.send("✅ البوت متصل بالفعل")
+                        pass  # البوت متصل بالفعل
                 else:
-                    await message.channel.send("🔌 إعادة الاتصال بالقناة الصوتية...")
-                    await voice_client.disconnect()
                     voice_client = await voice_channel.connect(timeout=10.0)
                     voice_clients[guild_id] = voice_client
             else:
-                await message.channel.send("🔌 إنشاء اتصال جديد...")
                 voice_client = await voice_channel.connect(timeout=10.0)
                 voice_clients[guild_id] = voice_client
                 
-            await message.channel.send("✅ تم الاتصال بالقناة الصوتية بنجاح!")
-            
         except Exception as e:
             await message.channel.send(f"❌ خطأ في الاتصال: {str(e)}")
             return
 
         # تشغيل الأغنية
         try:
-            await message.channel.send("🎵 جاري تشغيل الأغنية...")
-            
             if voice_client.is_playing():
-                await message.channel.send("⏹️ إيقاف الأغنية الحالية...")
                 voice_client.stop()
             
             # التحقق من أن المتغيرات موجودة
@@ -516,20 +504,17 @@ async def play_song(message):
             if 'duration' not in locals():
                 duration = 0
                 
-            await message.channel.send(f"🔗 جاري تحميل: {url[:100]}...")
             audio_source = discord.FFmpegPCMAudio(url, **ffmpeg_options)
             
             def after_playing(error):
                 if error:
                     print(f"خطأ في التشغيل: {error}")
-                    asyncio.create_task(message.channel.send(f"❌ خطأ في التشغيل: {error}"))
                 else:
                     print("تم انتهاء الأغنية بنجاح")
             
             voice_client.play(audio_source, after=after_playing)
-            await message.channel.send("▶️ تم بدء تشغيل الأغنية!")
             
-            # إرسال رسالة تأكيد
+            # رسالة تأكيد واحدة فقط
             try:
                 if duration > 0:
                     duration_minutes = int(duration // 60)
