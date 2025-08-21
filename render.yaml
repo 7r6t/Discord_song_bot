@@ -11,4 +11,8 @@ services:
       - key: PYTHON_VERSION
         value: 3.11
       - key: KEEP_ALIVE_URL
-        value: https://discord-music-bot.onrender.com 
+        value: https://discord-music-bot.onrender.com
+      - key: PORT
+        value: 8080
+    healthCheckPath: /health
+    autoDeploy: true 

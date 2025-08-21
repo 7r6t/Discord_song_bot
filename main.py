@@ -683,6 +683,50 @@ def start_keep_alive():
     print("🚀 Keep Alive started in background thread (every 20 seconds)")
     return keep_alive_thread
 
+def start_web_server():
+    """بدء خادم ويب بسيط"""
+    try:
+        from flask import Flask, jsonify
+        
+        app = Flask(__name__)
+        
+        @app.route('/')
+        def home():
+            return jsonify({
+                "status": "online",
+                "message": "Discord Music Bot is running!",
+                "timestamp": time.time()
+            })
+        
+        @app.route('/ping')
+        def ping():
+            return jsonify({
+                "status": "pong",
+                "timestamp": time.time()
+            })
+        
+        @app.route('/health')
+        def health():
+            return jsonify({
+                "status": "healthy",
+                "uptime": time.time(),
+                "version": "1.0.0"
+            })
+        
+        def run_flask():
+            port = int(os.getenv('PORT', 8080))
+            print(f"🌐 Starting Flask web server on port {port}")
+            app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+        
+        web_thread = threading.Thread(target=run_flask, daemon=True)
+        web_thread.start()
+        print("🚀 Web server started in background thread")
+        return web_thread
+        
+    except ImportError:
+        print("⚠️ Flask not available, web server disabled")
+        return None
+
 # تشغيل البوت
 if __name__ == "__main__":
     if DISCORD_TOKEN == "YOUR_DISCORD_BOT_TOKEN_HERE":
@@ -691,6 +735,9 @@ if __name__ == "__main__":
     
     # بدء Keep Alive
     keep_alive_thread = start_keep_alive()
+    
+    # بدء خادم الويب
+    web_thread = start_web_server()
     
     print("🎵 بدء تشغيل Discord Music Bot...")
     bot.run(DISCORD_TOKEN) 
