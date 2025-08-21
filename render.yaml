@@ -9,4 +9,6 @@ services:
       - key: DISCORD_TOKEN
         sync: false
       - key: PYTHON_VERSION
-        value: 3.11 
+        value: 3.11
+      - key: KEEP_ALIVE_URL
+        value: https://discord-music-bot.onrender.com 

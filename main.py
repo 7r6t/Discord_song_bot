@@ -4,6 +4,8 @@ import asyncio
 import yt_dlp
 import os
 import ssl
+import threading
+import time
 # قراءة التوكن من متغيرات البيئة أو من config.py
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN') or 'YOUR_DISCORD_BOT_TOKEN_HERE'
 BOT_STATUS = "🎵 استمع للموسيقى"
@@ -45,7 +47,11 @@ yt_dl_opts = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-us,en;q=0.5',
         'Sec-Fetch-Mode': 'navigate'
-    }
+    },
+    'cookies': None,
+    'extractor_retries': 3,
+    'fragment_retries': 3,
+    'retries': 3
 }
 
 ffmpeg_options = {
@@ -220,6 +226,11 @@ async def play_song(message):
                     alt_opts['http_headers'] = {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                     }
+                    alt_opts['cookies'] = None
+                    alt_opts['extractor_retries'] = 5
+                    alt_opts['fragment_retries'] = 5
+                    alt_opts['retries'] = 5
+                    
                     with yt_dlp.YoutubeDL(alt_opts) as ydl:
                         info = ydl.extract_info(search_query, download=False)
                         if 'entries' in info and info['entries']:
@@ -229,8 +240,26 @@ async def play_song(message):
                             await message.channel.send("❌ لم يتم العثور على الأغنية!")
                             return
                 except Exception as e2:
-                    await message.channel.send(f"❌ خطأ في البحث: لا يمكن الوصول إلى YouTube")
-                    return
+                    # محاولة أخيرة مع إعدادات بسيطة
+                    try:
+                        simple_opts = {
+                            'format': 'bestaudio/best',
+                            'quiet': True,
+                            'no_warnings': True,
+                            'extract_flat': False,
+                            'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                        }
+                        with yt_dlp.YoutubeDL(simple_opts) as ydl:
+                            info = ydl.extract_info(search_query, download=False)
+                            if 'entries' in info and info['entries']:
+                                video_info = info['entries'][0]
+                                await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
+                            else:
+                                await message.channel.send("❌ لم يتم العثور على الأغنية!")
+                                return
+                    except Exception as e3:
+                        await message.channel.send(f"❌ خطأ في البحث: لا يمكن الوصول إلى YouTube")
+                        return
             else:
                 await message.channel.send(f"❌ خطأ في البحث: {str(e)}")
                 return
@@ -561,10 +590,30 @@ async def test_voice_connection(message):
     except Exception as e:
         await message.channel.send(f"❌ خطأ في الاختبار: {str(e)}")
 
+def start_keep_alive():
+    """بدء Keep Alive لمنع إغلاق البوت"""
+    def keep_alive_loop():
+        while True:
+            try:
+                # إرسال ping كل 30 ثانية
+                time.sleep(30)
+                print("🔄 Keep Alive: البوت يعمل...")
+            except Exception as e:
+                print(f"❌ Keep Alive Error: {e}")
+    
+    keep_alive_thread = threading.Thread(target=keep_alive_loop, daemon=True)
+    keep_alive_thread.start()
+    print("🚀 Keep Alive started in background thread")
+    return keep_alive_thread
+
 # تشغيل البوت
 if __name__ == "__main__":
-    if DISCORD_TOKEN == "your_discord_bot_token_here":
-        print("❌ خطأ: يرجى تغيير رمز Discord في ملف config.py!")
+    if DISCORD_TOKEN == "YOUR_DISCORD_BOT_TOKEN_HERE":
+        print("❌ خطأ: يرجى تعيين DISCORD_TOKEN في متغيرات البيئة!")
         exit(1)
     
+    # بدء Keep Alive
+    keep_alive_thread = start_keep_alive()
+    
+    print("🎵 بدء تشغيل Discord Music Bot...")
     bot.run(DISCORD_TOKEN) 
