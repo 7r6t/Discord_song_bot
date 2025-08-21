@@ -273,15 +273,15 @@ async def play_song(message):
             await message.channel.send("🔍 جاري البحث بدون Cookies...")
             
             # البحث مع timeout
-            search_task = asyncio.create_task(
-                asyncio.get_event_loop().run_in_executor(
-                    None, 
-                    lambda: search_youtube(song_name, fast_opts)
-                )
-            )
-            
             try:
-                video_info = await asyncio.wait_for(search_task, timeout=30)
+                # استخدام run_in_executor مباشرة
+                video_info = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(
+                        None, 
+                        search_youtube, song_name, fast_opts
+                    ),
+                    timeout=30
+                )
                 
                 if video_info and 'url' in video_info:
                     url = video_info['url']
