@@ -236,12 +236,12 @@ async def play_song(message):
                     return
         except Exception as e:
             error_msg = str(e).lower()
-                            if "certificate" in error_msg or "ssl" in error_msg:
-                    await message.channel.send("❌ مشكلة في الاتصال الآمن. جاري المحاولة مرة أخرى...")
-                    # محاولة مع إعدادات مختلفة
-                    try:
-                        await message.channel.send("🔄 المحاولة الثانية: إعدادات بديلة...")
-                        alt_opts = yt_dl_opts.copy()
+            if "certificate" in error_msg or "ssl" in error_msg:
+                await message.channel.send("❌ مشكلة في الاتصال الآمن. جاري المحاولة مرة أخرى...")
+                # محاولة مع إعدادات مختلفة
+                try:
+                    await message.channel.send("🔄 المحاولة الثانية: إعدادات بديلة...")
+                    alt_opts = yt_dl_opts.copy()
                     alt_opts['source_address'] = None
                     alt_opts['extract_flat'] = False
                     alt_opts['format'] = 'bestaudio/best'
