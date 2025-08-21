@@ -28,7 +28,7 @@ voice_clients = {}
 # إعدادات yt-dlp محسنة لتجنب YouTube bot detection
 yt_dl_opts = {
     'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio/best',
-    'extractaudio': True,
+    'extractaudio': False,  # لا نستخرج الصوت
     'audioformat': 'mp3',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
@@ -72,7 +72,7 @@ yt_dl_opts = {
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
         'Referer': 'https://www.youtube.com/',
-        'Origin': 'https://www.youtube.com'
+        'Origin': 'https://www.youtube.com/'
     },
     'extractor_retries': 5,
     'fragment_retries': 5,
@@ -82,12 +82,8 @@ yt_dl_opts = {
     'sleep_interval_requests': 1,
     'socket_timeout': 30,
     'max_downloads': 1,
-    'prefer_ffmpeg': True,
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192'
-    }],
+    'prefer_ffmpeg': False,  # لا نستخدم FFmpeg للاستخراج
+    'postprocessors': [],  # لا نستخدم postprocessors
     'writesubtitles': False,
     'writeautomaticsub': False,
     'skip_download': True,
@@ -102,8 +98,8 @@ yt_dl_opts = {
 
 # إعدادات FFmpeg محسنة لـ SoundCloud و YouTube
 ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -allowed_extensions ALL -protocol_whitelist file,http,https,tcp,tls,crypto',
-    'options': '-vn -filter:a "volume=0.5" -f mp3 -acodec libmp3lame -b:a 192k'
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+    'options': '-vn -filter:a "volume=0.5"'
 }
 
 # Flask app للـ Keep Alive
