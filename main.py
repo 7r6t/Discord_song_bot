@@ -230,6 +230,10 @@ async def play_song(message):
             await message.channel.send("⚠️ البوت يحتاج صلاحية 'Use Voice Activity' للعمل بشكل أفضل")
 
         # فصل اسم الأغنية
+        if len(message.content) < 3:
+            await message.channel.send("❌ يرجى كتابة اسم الأغنية! مثال: ش despacito")
+            return
+        
         song_name = message.content[2:].strip()
         if not song_name:
             await message.channel.send("❌ يرجى كتابة اسم الأغنية!")
@@ -309,21 +313,29 @@ async def play_song(message):
                                 'Accept-Language': 'en-us,en;q=0.5',
                                 'Sec-Fetch-Mode': 'navigate',
                                 'DNT': '1',
-                                'Upgrade-Insecure-Requests': '1'
+                                'Upgrade-Insecure-Requests': '1',
+                                'Accept-Encoding': 'gzip, deflate, br',
+                                'Connection': 'keep-alive',
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
                             },
-                            'cookiesfrombrowser': None,  # تعطيل cookies من المتصفح
+                            'cookiesfrombrowser': None,
                             'cookies': 'youtube_cookies.txt',
-                            'extractor_retries': 10,
-                            'fragment_retries': 10,
-                            'retries': 10,
-                            'sleep_interval': 2,
-                            'max_sleep_interval': 10,
-                            'sleep_interval_requests': 2,
+                            'extractor_retries': 15,
+                            'fragment_retries': 15,
+                            'retries': 15,
+                            'sleep_interval': 3,
+                            'max_sleep_interval': 15,
+                            'sleep_interval_requests': 3,
                             'geo_bypass': True,
                             'geo_bypass_country': 'US',
+                            'geo_bypass_ip_block': '1.1.1.1',
+                            'force_generic_extractor': False,
                             'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
                             'no_check_certificate': True,
-                            'prefer_insecure': True
+                            'prefer_insecure': True,
+                            'socket_timeout': 60,
+                            'max_downloads': 1
                         }
                         with yt_dlp.YoutubeDL(advanced_opts) as ydl:
                             info = ydl.extract_info(search_query, download=False)
