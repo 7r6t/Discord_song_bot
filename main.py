@@ -96,10 +96,10 @@ yt_dl_opts = {
     'compat_opts': set()
 }
 
-# إعدادات FFmpeg
+# إعدادات FFmpeg محسنة لـ SoundCloud و YouTube
 ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-    'options': '-vn -filter:a "volume=0.5"'
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -allowed_extensions ALL',
+    'options': '-vn -filter:a "volume=0.5" -f m4a'
 }
 
 # Flask app للـ Keep Alive
@@ -274,33 +274,63 @@ async def play_song(message):
             fast_opts['max_sleep_interval'] = 0  # بدون انتظار
             fast_opts['sleep_interval_requests'] = 0  # بدون انتظار
 
-            await message.channel.send("🔍 جاري البحث بدون Cookies...")
+            # إرسال رسالة بحث جميلة
+            search_embed = discord.Embed(
+                title="🔍 البحث عن الأغنية",
+                description=f"**{song_name}**",
+                color=0x0099ff
+            )
+            search_embed.add_field(name="⏱️ الوقت المتوقع", value="5 ثواني", inline=True)
+            search_embed.add_field(name="🌐 المصدر", value="SoundCloud + YouTube", inline=True)
+            await message.channel.send(embed=search_embed)
             
             # البحث مع timeout
             try:
-                # استخدام run_in_executor مباشرة
+                # استخدام run_in_executor مباشرة مع timeout 5 ثواني
                 video_info = await asyncio.wait_for(
                     asyncio.get_event_loop().run_in_executor(
                         None, 
                         search_youtube, song_name, fast_opts
                     ),
-                    timeout=30
+                    timeout=5
                 )
                 
                 if video_info and 'url' in video_info:
                     url = video_info['url']
                     title = video_info.get('title', 'أغنية')
                     duration = video_info.get('duration', 0)
-                    await message.channel.send(f"✅ تم العثور على: **{title}**")
+                    
+                    # رسالة نجاح البحث جميلة
+                    success_embed = discord.Embed(
+                        title="✅ تم العثور على الأغنية!",
+                        description=f"**{title}**",
+                        color=0x00ff00
+                    )
+                    success_embed.add_field(name="🎵 المصدر", value=video_info.get('extractor', 'غير معروف'), inline=True)
+                    success_embed.add_field(name="⏱️ المدة", value=f"{duration//60}:{duration%60:02d}" if duration > 0 else "غير معروف", inline=True)
+                    await message.channel.send(embed=success_embed)
+                    
                     await message.channel.send("🔗 جاري الاتصال بالقناة الصوتية...")
                 else:
-                    await message.channel.send("❌ لم يتم العثور على الأغنية!")
-                    await message.channel.send("💡 **نصائح:**\n• تأكد من كتابة اسم الأغنية بشكل صحيح\n• جرب كلمات مختلفة\n• تأكد من وجود اتصال إنترنت")
+                    # رسالة فشل البحث جميلة
+                    error_embed = discord.Embed(
+                        title="❌ لم يتم العثور على الأغنية",
+                        description="فشل البحث في جميع المصادر",
+                        color=0xff0000
+                    )
+                    error_embed.add_field(name="💡 نصائح", value="• تأكد من كتابة اسم الأغنية بشكل صحيح\n• جرب كلمات مختلفة\n• تأكد من وجود اتصال إنترنت", inline=False)
+                    await message.channel.send(embed=error_embed)
                     return
                     
             except asyncio.TimeoutError:
-                search_task.cancel()
-                await message.channel.send("❌ انتهت مهلة البحث! جرب مرة أخرى بكلمات مختلفة.")
+                # رسالة انتهاء المهلة جميلة
+                timeout_embed = discord.Embed(
+                    title="⏰ انتهت مهلة البحث",
+                    description="البحث استغرق أكثر من 5 ثواني",
+                    color=0xff9900
+                )
+                timeout_embed.add_field(name="💡 نصيحة", value="جرب مرة أخرى بكلمات مختلفة أو انتظر قليلاً", inline=False)
+                await message.channel.send(embed=timeout_embed)
                 return
                 
         except Exception as e:
