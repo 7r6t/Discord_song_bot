@@ -1,7 +1,7 @@
 # ملف التكوين للبوت
 # قم بتغيير القيمة أدناه برمز البوت الخاص بك
 
-DISCORD_TOKEN = "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"
+DISCORD_TOKEN = "YOUR_DISCORD_BOT_TOKEN_HERE"
 
 # إعدادات إضافية
 BOT_PREFIX = ""
