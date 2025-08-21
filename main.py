@@ -27,9 +27,9 @@ voice_clients = {}
 
 # إعدادات yt-dlp محسنة لتجنب YouTube bot detection
 yt_dl_opts = {
-    'format': 'bestaudio[ext=m4a]/bestaudio/best',
+    'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio/best',
     'extractaudio': True,
-    'audioformat': 'm4a',
+    'audioformat': 'mp3',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
@@ -50,6 +50,10 @@ yt_dl_opts = {
             'player_skip': ['webpage', 'configs'],
             'innertube_host': 'www.youtube.com',
             'innertube_key': 'AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w'
+        },
+        'soundcloud': {
+            'skip': ['hls', 'opus'],
+            'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]'
         }
     },
     'geo_bypass': True,
@@ -81,7 +85,7 @@ yt_dl_opts = {
     'prefer_ffmpeg': True,
     'postprocessors': [{
         'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'm4a',
+        'preferredcodec': 'mp3',
         'preferredquality': '192'
     }],
     'writesubtitles': False,
@@ -98,8 +102,8 @@ yt_dl_opts = {
 
 # إعدادات FFmpeg محسنة لـ SoundCloud و YouTube
 ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -allowed_extensions ALL',
-    'options': '-vn -filter:a "volume=0.5" -f m4a'
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -allowed_extensions ALL -protocol_whitelist file,http,https,tcp,tls,crypto',
+    'options': '-vn -filter:a "volume=0.5" -f mp3 -acodec libmp3lame -b:a 192k'
 }
 
 # Flask app للـ Keep Alive
