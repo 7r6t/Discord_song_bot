@@ -41,7 +41,8 @@ yt_dl_opts = {
                 'cookiesfrombrowser': None,
                 'cookies': 'youtube_cookies.txt',
                 'cookiefile': 'youtube_cookies.txt',
-                'extractor_args': {'youtube': {'skip': ['dash', 'live'], 'player_client': ['android', 'web'], 'player_skip': ['webpage', 'configs']}},
+                'cookiesfile': 'youtube_cookies.txt',
+                'extractor_args': {'youtube': {'skip': ['dash', 'live'], 'player_client': ['android', 'web'], 'player_skip': ['webpage', 'configs'], 'skip': ['dash', 'live', 'hls']}},
                 'geo_bypass': True,
                 'geo_bypass_country': 'US',
                 'geo_bypass_ip_block': '1.1.1.1/24',
@@ -56,7 +57,9 @@ yt_dl_opts = {
                     'Accept-Encoding': 'gzip, deflate, br',
                     'Connection': 'keep-alive',
                     'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
+                    'Pragma': 'no-cache',
+                    'Referer': 'https://www.youtube.com/',
+                    'Origin': 'https://www.youtube.com'
                 },
                 'extractor_retries': 15,
                 'fragment_retries': 15,
@@ -251,6 +254,8 @@ async def play_song(message):
             fast_opts['prefer_insecure'] = True  # تفضيل الاتصال غير الآمن
             fast_opts['extract_flat'] = True  # استخراج مسطح للبحث
             fast_opts['skip_download'] = True  # تخطي التحميل
+            fast_opts['no_check_cookies'] = False  # فحص Cookies
+            fast_opts['cookies_from_browser'] = None  # تعطيل cookies من المتصفح
             
             # إضافة رسالة تأكيد
             await message.channel.send("🔍 جاري البحث باستخدام Cookies...")
