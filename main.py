@@ -245,17 +245,27 @@ async def play_song(message):
             await message.channel.send("❌ البوت يحتاج صلاحيات 'Connect' و 'Speak'!")
             return
             
-        # فصل اسم الأغنية
+        # فصل اسم الأغنية أو الرابط
         if len(message.content) < 2:
-            await message.channel.send("❌ يرجى كتابة اسم الأغنية! مثال: ش despacito")
+            await message.channel.send("❌ يرجى كتابة اسم الأغنية أو الرابط! مثال: ش despacito أو ش https://youtube.com/...")
             return
         
-        song_name = message.content[1:].strip()
-        if not song_name:
-            await message.channel.send("❌ يرجى كتابة اسم الأغنية!")
+        song_input = message.content[1:].strip()
+        if not song_input:
+            await message.channel.send("❌ يرجى كتابة اسم الأغنية أو الرابط!")
             return
 
-        await message.channel.send(f"🔍 جاري البحث عن: {song_name}...")
+        # التحقق من نوع المدخل (رابط أم اسم)
+        is_url = song_input.startswith(('http://', 'https://', 'www.', 'youtube.com', 'youtu.be', 'soundcloud.com'))
+        
+        if is_url:
+            # إذا كان رابط، استخدمه مباشرة
+            song_name = song_input
+            await message.channel.send(f"🔗 جاري تشغيل الرابط المباشر: {song_name[:50]}...")
+        else:
+            # إذا كان اسم، ابحث عنه
+            song_name = song_input
+            await message.channel.send(f"🔍 جاري البحث عن: {song_name}...")
 
         # البحث مع timeout قصير
         video_info = None
@@ -274,26 +284,64 @@ async def play_song(message):
             fast_opts['max_sleep_interval'] = 0  # بدون انتظار
             fast_opts['sleep_interval_requests'] = 0  # بدون انتظار
 
-            # إرسال رسالة بحث جميلة
-            search_embed = discord.Embed(
-                title="🔍 البحث عن الأغنية",
-                description=f"**{song_name}**",
-                color=0x0099ff
-            )
-            search_embed.add_field(name="⏱️ الوقت المتوقع", value="5 ثواني", inline=True)
-            search_embed.add_field(name="🌐 المصدر", value="SoundCloud + YouTube", inline=True)
-            await message.channel.send(embed=search_embed)
-            
-            # البحث مع timeout
-            try:
-                # استخدام run_in_executor مباشرة مع timeout 5 ثواني
-                video_info = await asyncio.wait_for(
-                    asyncio.get_event_loop().run_in_executor(
-                        None, 
-                        search_youtube, song_name, fast_opts
-                    ),
-                    timeout=5
+            # البحث أو تشغيل الرابط المباشر
+            if is_url:
+                # إذا كان رابط، استخدمه مباشرة
+                url_embed = discord.Embed(
+                    title="🔗 تشغيل الرابط المباشر",
+                    description=f"**{song_name[:50]}...**",
+                    color=0x00ff00
                 )
+                url_embed.add_field(name="⏱️ الوقت المتوقع", value="10 ثواني", inline=True)
+                url_embed.add_field(name="🌐 المصدر", value="رابط مباشر", inline=True)
+                await message.channel.send(embed=url_embed)
+                
+                try:
+                    # استخراج معلومات الرابط المباشر
+                    video_info = await asyncio.wait_for(
+                        asyncio.get_event_loop().run_in_executor(
+                            None, 
+                            get_direct_url_info, song_name
+                        ),
+                        timeout=10  # timeout أطول للروابط
+                    )
+                except asyncio.TimeoutError:
+                    timeout_embed = discord.Embed(
+                        title="⏰ انتهت مهلة استخراج الرابط",
+                        description="استخراج الرابط استغرق أكثر من 10 ثواني",
+                        color=0xff9900
+                    )
+                    await message.channel.send(embed=timeout_embed)
+                    return
+            else:
+                # إذا كان اسم، ابحث عنه
+                search_embed = discord.Embed(
+                    title="🔍 البحث عن الأغنية",
+                    description=f"**{song_name}**",
+                    color=0x0099ff
+                )
+                search_embed.add_field(name="⏱️ الوقت المتوقع", value="5 ثواني", inline=True)
+                search_embed.add_field(name="🌐 المصدر", value="SoundCloud + YouTube", inline=True)
+                await message.channel.send(embed=search_embed)
+                
+                try:
+                    # البحث في SoundCloud و YouTube
+                    video_info = await asyncio.wait_for(
+                        asyncio.get_event_loop().run_in_executor(
+                            None, 
+                            search_youtube, song_name, fast_opts
+                        ),
+                        timeout=5
+                    )
+                except asyncio.TimeoutError:
+                    timeout_embed = discord.Embed(
+                        title="⏰ انتهت مهلة البحث",
+                        description="البحث استغرق أكثر من 5 ثواني",
+                        color=0xff9900
+                    )
+                    timeout_embed.add_field(name="💡 نصيحة", value="جرب مرة أخرى بكلمات مختلفة أو انتظر قليلاً", inline=False)
+                    await message.channel.send(embed=timeout_embed)
+                    return
                 
                 if video_info and 'url' in video_info:
                     url = video_info['url']
@@ -332,17 +380,6 @@ async def play_song(message):
                     await message.channel.send(embed=error_embed)
                     return
                     
-            except asyncio.TimeoutError:
-                # رسالة انتهاء المهلة جميلة
-                timeout_embed = discord.Embed(
-                    title="⏰ انتهت مهلة البحث",
-                    description="البحث استغرق أكثر من 5 ثواني",
-                    color=0xff9900
-                )
-                timeout_embed.add_field(name="💡 نصيحة", value="جرب مرة أخرى بكلمات مختلفة أو انتظر قليلاً", inline=False)
-                await message.channel.send(embed=timeout_embed)
-                return
-                
         except Exception as e:
             await message.channel.send(f"❌ خطأ في البحث: {str(e)[:100]}...")
             return
@@ -479,6 +516,35 @@ def search_youtube(query, opts):
         
     except Exception as e:
         print(f"❌ خطأ عام في البحث: {e}")
+        return None
+
+def get_direct_url_info(url):
+    """استخراج معلومات من رابط مباشر"""
+    try:
+        print(f"🔗 استخراج معلومات من: {url}")
+        
+        # إعدادات بسيطة للروابط المباشرة
+        url_opts = {
+            'format': 'bestaudio',
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': False,
+            'skip_download': True
+        }
+        
+        with yt_dlp.YoutubeDL(url_opts) as ydl:
+            # استخراج معلومات الرابط
+            info = ydl.extract_info(url, download=False)
+            
+            if info and 'title' in info:
+                print(f"✅ تم استخراج: {info.get('title', 'بدون عنوان')}")
+                return info
+            else:
+                print("❌ فشل في استخراج معلومات الرابط")
+                return None
+                
+    except Exception as e:
+        print(f"❌ خطأ في استخراج الرابط: {e}")
         return None
 
 def search_soundcloud(query):
