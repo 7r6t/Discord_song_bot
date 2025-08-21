@@ -7,6 +7,7 @@ import ssl
 import threading
 import time
 import requests
+import json
 from flask import Flask, jsonify
 
 # قراءة التوكن من متغيرات البيئة أو من config.py
@@ -359,7 +360,7 @@ async def play_song(message):
         await message.channel.send(f"❌ خطأ عام في تشغيل الأغنية: {str(e)}")
 
 def search_youtube(query, opts):
-    """البحث في YouTube مع معالجة الأخطاء"""
+    """البحث في YouTube مع معالجة الأخطاء - الحل النهائي"""
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             print(f"🔍 البحث عن: {query}")
@@ -394,15 +395,30 @@ def search_youtube(query, opts):
             except Exception as e2:
                 print(f"❌ خطأ في ytsearch5: {e2}")
             
-            # محاولة 3: البحث المباشر (بدون ytsearch)
+            # محاولة 3: البحث باستخدام ytsearch (بدون رقم)
             try:
-                print("🔍 المحاولة 3: البحث المباشر")
+                print("🔍 المحاولة 3: ytsearch (بدون رقم)")
+                search_results = ydl.extract_info(f"ytsearch:{query}", download=False)
+                print(f"نتائج ytsearch: {search_results}")
+                
+                if search_results and 'entries' in search_results and search_results['entries']:
+                    first_result = search_results['entries'][0]
+                    print(f"✅ تم العثور على: {first_result.get('title', 'بدون عنوان')}")
+                    return first_result
+                else:
+                    print("❌ لا توجد نتائج في ytsearch")
+            except Exception as e3:
+                print(f"❌ خطأ في ytsearch: {e3}")
+            
+            # محاولة 4: البحث المباشر (بدون ytsearch)
+            try:
+                print("🔍 المحاولة 4: البحث المباشر")
                 # تجربة البحث كرابط مباشر
                 if "youtube.com" in query or "youtu.be" in query:
                     info = ydl.extract_info(query, download=False)
                 else:
                     # تجربة البحث ككلمات
-                    info = ydl.extract_info(f"ytsearch:{query}", download=False)
+                    info = ydl.extract_info(query, download=False)
                 
                 print(f"نتيجة البحث المباشر: {info}")
                 
@@ -415,12 +431,12 @@ def search_youtube(query, opts):
                     return first_result
                 else:
                     print("❌ لا توجد نتائج في البحث المباشر")
-            except Exception as e3:
-                print(f"❌ خطأ في البحث المباشر: {e3}")
+            except Exception as e4:
+                print(f"❌ خطأ في البحث المباشر: {e4}")
             
-            # محاولة 4: البحث باستخدام ytsearch10 (أكثر نتائج)
+            # محاولة 5: البحث باستخدام ytsearch10 (أكثر نتائج)
             try:
-                print("🔍 المحاولة 4: ytsearch10 (أكثر نتائج)")
+                print("🔍 المحاولة 5: ytsearch10 (أكثر نتائج)")
                 search_results = ydl.extract_info(f"ytsearch10:{query}", download=False)
                 print(f"نتائج ytsearch10: {search_results}")
                 
@@ -430,14 +446,97 @@ def search_youtube(query, opts):
                     return first_result
                 else:
                     print("❌ لا توجد نتائج في ytsearch10")
-            except Exception as e4:
-                print(f"❌ خطأ في ytsearch10: {e4}")
+            except Exception as e5:
+                print(f"❌ خطأ في ytsearch10: {e5}")
+            
+            # محاولة 6: البحث باستخدام ytsearch (مع default_search)
+            try:
+                print("🔍 المحاولة 6: البحث مع default_search")
+                # تغيير default_search مؤقتاً
+                temp_opts = opts.copy()
+                temp_opts['default_search'] = 'ytsearch'
+                
+                with yt_dlp.YoutubeDL(temp_opts) as temp_ydl:
+                    info = temp_ydl.extract_info(query, download=False)
+                    print(f"نتيجة البحث مع default_search: {info}")
+                    
+                    if info and 'title' in info:
+                        print(f"✅ تم العثور على: {info.get('title', 'بدون عنوان')}")
+                        return info
+                    elif info and 'entries' in info and info['entries']:
+                        first_result = info['entries'][0]
+                        print(f"✅ تم العثور على: {first_result.get('title', 'بدون عنوان')}")
+                        return first_result
+                    else:
+                        print("❌ لا توجد نتائج مع default_search")
+            except Exception as e6:
+                print(f"❌ خطأ في البحث مع default_search: {e6}")
                 
         print("❌ فشلت جميع محاولات البحث")
+        
+        # محاولة أخيرة: البحث باستخدام YouTube API مباشرة
+        try:
+            print("🔍 المحاولة الأخيرة: YouTube API مباشر")
+            api_result = search_youtube_api(query)
+            if api_result:
+                print(f"✅ تم العثور على: {api_result.get('title', 'بدون عنوان')}")
+                return api_result
+        except Exception as e_api:
+            print(f"❌ خطأ في YouTube API: {e_api}")
+        
         return None
         
     except Exception as e:
         print(f"❌ خطأ عام في البحث: {e}")
+        return None
+
+def search_youtube_api(query):
+    """البحث باستخدام YouTube API مباشرة"""
+    try:
+        # استخدام YouTube Data API v3
+        api_key = "AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w"
+        search_url = f"https://www.googleapis.com/youtube/v3/search"
+        
+        params = {
+            'part': 'snippet',
+            'q': query,
+            'key': api_key,
+            'maxResults': 1,
+            'type': 'video'
+        }
+        
+        response = requests.get(search_url, params=params, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if 'items' in data and data['items']:
+                video_id = data['items'][0]['id']['videoId']
+                title = data['items'][0]['snippet']['title']
+                
+                # الحصول على معلومات الفيديو
+                video_url = f"https://www.youtube.com/watch?v={video_id}"
+                
+                # استخدام yt-dlp للحصول على معلومات التشغيل
+                with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
+                    try:
+                        video_info = ydl.extract_info(video_url, download=False)
+                        if video_info and 'url' in video_info:
+                            return video_info
+                    except:
+                        pass
+                
+                # إنشاء معلومات بسيطة إذا فشل yt-dlp
+                return {
+                    'id': video_id,
+                    'title': title,
+                    'url': video_url,
+                    'duration': 0,
+                    'webpage_url': video_url
+                }
+        
+        return None
+        
+    except Exception as e:
+        print(f"خطأ في YouTube API: {e}")
         return None
 
 async def skip_song(message):
