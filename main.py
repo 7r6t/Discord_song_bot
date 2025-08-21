@@ -29,11 +29,10 @@ yt_dl_opts = {
                 'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
                 'restrictfilenames': True,
                 'noplaylist': True,
-                'nocheckcertificate': True,
                 'ignoreerrors': False,
                 'logtostderr': False,
-                'quiet': True,
-                'no_warnings': True,
+                'quiet': False,
+                'no_warnings': False,
                 'default_search': 'auto',
                 'source_address': '0.0.0.0',
                 'no_check_certificate': True,
@@ -41,6 +40,7 @@ yt_dl_opts = {
                 'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'cookiesfrombrowser': None,
                 'cookies': 'youtube_cookies.txt',
+                'cookiefile': 'youtube_cookies.txt',
                 'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
                 'geo_bypass': True,
                 'geo_bypass_country': 'US',
@@ -66,7 +66,6 @@ yt_dl_opts = {
                 'sleep_interval_requests': 3,
                 'socket_timeout': 60,
                 'max_downloads': 1,
-                'nocheckcertificate': True,
                 'prefer_ffmpeg': True,
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
@@ -76,8 +75,6 @@ yt_dl_opts = {
                 'writesubtitles': False,
                 'writeautomaticsub': False,
                 'skip_download': False,
-                'nocheckcertificate': True,
-                'prefer_insecure': True,
                 'http_chunk_size': 10485760
             }
 
