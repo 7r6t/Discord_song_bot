@@ -38,7 +38,7 @@ yt_dl_opts = {
     'no_check_certificate': True,
     'prefer_insecure': True,
     'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'cookiesfrombrowser': None,
+    'cookiesfrombrowser': ('chrome',),  # استخدام cookies من Chrome
     'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
     'geo_bypass': True,
     'geo_bypass_country': 'US',
@@ -234,6 +234,7 @@ async def play_song(message):
                     alt_opts['http_headers'] = {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                     }
+                    alt_opts['cookiesfrombrowser'] = ('chrome',)  # استخدام cookies من Chrome
                     alt_opts['cookies'] = 'youtube_cookies.txt'
                     alt_opts['extractor_retries'] = 5
                     alt_opts['fragment_retries'] = 5
@@ -264,6 +265,7 @@ async def play_song(message):
                                 'DNT': '1',
                                 'Upgrade-Insecure-Requests': '1'
                             },
+                            'cookiesfrombrowser': ('chrome',),  # استخدام cookies من Chrome
                             'cookies': 'youtube_cookies.txt',
                             'extractor_retries': 10,
                             'fragment_retries': 10,
@@ -627,6 +629,7 @@ async def test_youtube_connection(message):
             'no_warnings': True,
             'extract_flat': True,
             'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'cookiesfrombrowser': ('chrome',),  # استخدام cookies من Chrome
             'cookies': 'youtube_cookies.txt'
         }
         
@@ -646,7 +649,8 @@ async def test_youtube_connection(message):
                                          "1. جرب البحث مرة أخرى\n"
                                          "2. استخدم رابط مباشر بدلاً من البحث\n"
                                          "3. انتظر قليلاً ثم جرب مرة أخرى\n"
-                                         "4. البوت يحاول طرق بديلة تلقائياً")
+                                         "4. البوت يحاول طرق بديلة تلقائياً\n"
+                                         "5. تأكد من تسجيل الدخول في Chrome")
             else:
                 await message.channel.send(f"❌ خطأ في الاتصال: {str(e)}")
                 
