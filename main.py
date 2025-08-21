@@ -247,7 +247,7 @@ async def play_song(message):
             fast_opts = yt_dl_opts.copy()
             fast_opts['quiet'] = False  # نريد رؤية الأخطاء
             fast_opts['no_warnings'] = False  # نريد رؤية التحذيرات
-            fast_opts['extract_flat'] = False  # نحتاج معلومات كاملة للتشغيل
+            fast_opts['extract_flat'] = True  # نستخدم extract_flat للبحث
             fast_opts['verbose'] = True  # تفاصيل أكثر
             fast_opts['ignoreerrors'] = True  # تجاهل بعض الأخطاء
             fast_opts['no_check_certificate'] = True  # تجاهل شهادات SSL
@@ -272,16 +272,30 @@ async def play_song(message):
                 await message.channel.send("🔍 جاري البحث المباشر...")
                 try:
                     await message.channel.send(f"🔍 جاري البحث عن: {direct_search}")
-                    direct_info = ydl.extract_info(direct_search, download=False)
+                    # أولاً نبحث باستخدام extract_flat
+                    search_results = ydl.extract_info(f"ytsearch5:{direct_search}", download=False)
                     
-                    if direct_info and 'title' in direct_info:
-                        video_info = direct_info
-                        await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
-                    elif direct_info:
-                        await message.channel.send(f"⚠️ تم العثور على معلومات لكن بدون عنوان: {str(direct_info)[:100]}...")
-                        return
+                    if search_results and 'entries' in search_results and search_results['entries']:
+                        # نأخذ أول نتيجة
+                        search_entry = search_results['entries'][0]
+                        video_id = search_entry.get('id')
+                        
+                        if video_id:
+                            await message.channel.send(f"✅ تم العثور على: **{search_entry.get('title', 'أغنية')}**")
+                            # الآن نحصل على معلومات التشغيل الكاملة
+                            await message.channel.send("🔍 جاري الحصول على معلومات التشغيل...")
+                            video_info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+                            
+                            if video_info and 'url' in video_info:
+                                await message.channel.send("✅ تم الحصول على معلومات التشغيل!")
+                            else:
+                                await message.channel.send("❌ فشل في الحصول على معلومات التشغيل!")
+                                return
+                        else:
+                            await message.channel.send("❌ فشل في الحصول على معرف الفيديو!")
+                            return
                     else:
-                        await message.channel.send("❌ فشل البحث المباشر - لا توجد معلومات!")
+                        await message.channel.send("❌ فشل البحث المباشر - لا توجد نتائج!")
                         return
                         
                 except Exception as direct_error:
