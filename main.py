@@ -115,41 +115,68 @@ def health():
 
 def start_web_server():
     """تشغيل الخادم الويب في خيط منفصل"""
-    port = int(os.environ.get("PORT", 8080))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    try:
+        port = int(os.environ.get("PORT", 8080))
+        print(f"🌐 بدء الخادم الويب على المنفذ {port}...")
+        app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
+    except Exception as e:
+        print(f"❌ فشل في بدء الخادم الويب: {e}")
 
 def start_keep_alive():
     """تشغيل Keep Alive في خيط منفصل"""
     def keep_alive():
+        print("🚀 بدء Keep Alive...")
         while True:
             try:
                 time.sleep(20)
-                print("🔄 Keep Alive: البوت يعمل...")
+                current_time = time.strftime("%H:%M:%S")
+                print(f"🔄 Keep Alive: البوت يعمل... [{current_time}]")
                 
                 # إرسال ping للخادم إذا كان متاحاً
                 keep_alive_url = os.environ.get("KEEP_ALIVE_URL")
                 if keep_alive_url:
                     try:
-                        requests.get(keep_alive_url, timeout=5)
-                    except:
-                        pass
-            except:
-                pass
+                        response = requests.get(keep_alive_url, timeout=5)
+                        print(f"✅ Keep Alive ping: {response.status_code}")
+                    except Exception as e:
+                        print(f"❌ Keep Alive ping failed: {e}")
+                else:
+                    print("ℹ️ KEEP_ALIVE_URL غير محدد")
+                    
+            except Exception as e:
+                print(f"❌ خطأ في Keep Alive: {e}")
+                time.sleep(5)  # انتظار قصير قبل المحاولة مرة أخرى
     
-    thread = threading.Thread(target=keep_alive, daemon=True)
-    thread.start()
+    try:
+        thread = threading.Thread(target=keep_alive, daemon=True, name="KeepAlive")
+        thread.start()
+        print("✅ Keep Alive thread بدأ بنجاح")
+    except Exception as e:
+        print(f"❌ فشل في بدء Keep Alive: {e}")
 
 @bot.event
 async def on_ready():
     print(f'✅ البوت متصل: {bot.user}')
     await bot.change_presence(activity=discord.Game(name=BOT_STATUS))
     
-    # بدء Keep Alive والخادم الويب
-    start_keep_alive()
-    web_thread = threading.Thread(target=start_web_server, daemon=True)
-    web_thread.start()
+    print("🚀 بدء الخدمات...")
     
-    print("🌐 الخادم الويب يعمل للـ Keep Alive")
+    # بدء Keep Alive
+    try:
+        start_keep_alive()
+        print("✅ Keep Alive بدأ بنجاح")
+    except Exception as e:
+        print(f"❌ فشل في بدء Keep Alive: {e}")
+    
+    # بدء الخادم الويب
+    try:
+        web_thread = threading.Thread(target=start_web_server, daemon=True, name="WebServer")
+        web_thread.start()
+        print("✅ الخادم الويب بدأ بنجاح")
+    except Exception as e:
+        print(f"❌ فشل في بدء الخادم الويب: {e}")
+    
+    print("🎉 جميع الخدمات بدأت بنجاح!")
 
 @bot.event
 async def on_error(event, *args, **kwargs):
