@@ -53,7 +53,7 @@ yt_dl_opts = {
             'innertube_key': 'AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w'
         },
         'soundcloud': {
-            'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio[!ext=opus][!ext=ogg][!ext=hls]'
+            'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio'
         }
     },
     'geo_bypass': True,
@@ -330,7 +330,7 @@ async def play_song(message):
             fast_opts['sleep_interval'] = 1  # انتظار قصير بين الطلبات
             fast_opts['max_sleep_interval'] = 3  # انتظار أقصى قصير
             fast_opts['sleep_interval_requests'] = 1  # انتظار قصير بين الطلبات
-            fast_opts['format'] = 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio[!ext=opus][!ext=ogg][!ext=hls]'
+            fast_opts['format'] = 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio'
 
             # البحث أو تشغيل الرابط المباشر
             if is_url:
@@ -571,13 +571,12 @@ def get_direct_url_info(url):
         
         # إعدادات محسنة للروابط المباشرة (SoundCloud فقط)
         url_opts = {
-            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio',
             'quiet': False,  # لرؤية الأخطاء
             'no_warnings': False,  # لرؤية التحذيرات
             'extract_flat': False,
             'skip_download': True,
-            'extractaudio': True,
-            'audioformat': 'm4a'
+            'extractaudio': False
         }
         
         with yt_dlp.YoutubeDL(url_opts) as ydl:
@@ -586,6 +585,13 @@ def get_direct_url_info(url):
             print(f"🔍 معلومات الرابط: {info}")
             
             if info and 'title' in info:
+                # التحقق من أن URL ليس OPUS
+                if 'url' in info:
+                    url_check = info['url']
+                    if any(ext in url_check.lower() for ext in ['.opus', '.ogg', 'opus', 'ogg']):
+                        print("⚠️ تم تجاهل رابط OPUS/OGG")
+                        return None
+                
                 print(f"✅ تم استخراج: {info.get('title', 'بدون عنوان')}")
                 print(f"🔗 URL: {info.get('url', 'غير متوفر')}")
                 print(f"📊 المدة: {info.get('duration', 'غير متوفر')}")
@@ -606,7 +612,7 @@ def search_soundcloud(query):
         
         # استخدام yt-dlp للبحث في SoundCloud
         sc_opts = {
-            'format': 'bestaudio',
+            'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio',
             'quiet': True,
             'no_warnings': True,
             'extract_flat': False,
@@ -620,6 +626,14 @@ def search_soundcloud(query):
             
             if info and 'entries' in info and info['entries']:
                 first_result = info['entries'][0]
+                
+                # التحقق من أن النتيجة ليست OPUS
+                if 'url' in first_result:
+                    url = first_result['url']
+                    if any(ext in url.lower() for ext in ['.opus', '.ogg', 'opus', 'ogg']):
+                        print("⚠️ تم تجاهل نتيجة OPUS/OGG")
+                        return None
+                
                 print(f"✅ SoundCloud: {first_result.get('title', 'بدون عنوان')}")
                 return first_result
             else:
