@@ -1,5 +1,6 @@
 # Netscape HTTP Cookie File
 # تم إنشاؤه تلقائياً بواسطة البوت
+# عدد Cookies: 20
 
 .youtube.com	TRUE	/	1771298135	VISITOR_INFO1_LIVE	2CiZXzQT4H8
 .youtube.com	TRUE	/	1771298135	VISITOR_PRIVACY_METADATA	CgJTQRIEGgAgDw%3D%3D
