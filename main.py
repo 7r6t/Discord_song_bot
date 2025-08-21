@@ -245,9 +245,10 @@ async def play_song(message):
         try:
             # إعدادات سريعة للبحث
             fast_opts = yt_dl_opts.copy()
-            fast_opts['quiet'] = True
-            fast_opts['no_warnings'] = True
+            fast_opts['quiet'] = False  # نريد رؤية الأخطاء
+            fast_opts['no_warnings'] = False  # نريد رؤية التحذيرات
             fast_opts['extract_flat'] = False  # نحتاج معلومات كاملة للتشغيل
+            fast_opts['verbose'] = True  # تفاصيل أكثر
             
             # إضافة رسالة تأكيد
             await message.channel.send("🔍 جاري البحث باستخدام Cookies...")
@@ -255,12 +256,17 @@ async def play_song(message):
             with yt_dlp.YoutubeDL(fast_opts) as ydl:
                 # البحث في YouTube
                 search_query = f"ytsearch1:{song_name}"  # نتيجة واحدة فقط
-                info = ydl.extract_info(search_query, download=False)
-                if 'entries' in info and info['entries']:
-                    video_info = info['entries'][0]
-                    await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
-                else:
-                    await message.channel.send("❌ لم يتم العثور على الأغنية!")
+                await message.channel.send(f"🔍 جاري البحث عن: {search_query}")
+                try:
+                    info = ydl.extract_info(search_query, download=False)
+                    if info and 'entries' in info and info['entries']:
+                        video_info = info['entries'][0]
+                        await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
+                    else:
+                        await message.channel.send("❌ لم يتم العثور على الأغنية!")
+                        return
+                except Exception as search_error:
+                    await message.channel.send(f"❌ خطأ في البحث: {str(search_error)}")
                     return
         except Exception as e:
             error_msg = str(e).lower()
