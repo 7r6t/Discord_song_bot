@@ -486,6 +486,15 @@ async def play_song(message):
                     print(f"خطأ في التشغيل: {error}")
                 else:
                     print("تم انتهاء الأغنية بنجاح")
+                    # التحقق من التكرار
+                    if hasattr(voice_client, 'loop_enabled') and voice_client.loop_enabled:
+                        print("🔄 التكرار مفعل - إعادة تشغيل الأغنية")
+                        # إعادة تشغيل الأغنية
+                        try:
+                            new_audio_source = discord.FFmpegPCMAudio(url, **ffmpeg_options)
+                            voice_client.play(new_audio_source, after=after_playing)
+                        except Exception as e:
+                            print(f"❌ خطأ في إعادة التشغيل: {e}")
             
             voice_client.play(audio_source, after=after_playing)
             
@@ -676,11 +685,34 @@ async def stop_bot(message):
 
 async def loop_song(message):
     """تكرار الأغنية"""
-    await message.channel.send("🔄 ميزة التكرار غير متوفرة حالياً")
+    try:
+        guild_id = message.guild.id
+        if guild_id in voice_clients and voice_clients[guild_id].is_playing():
+            # تفعيل التكرار
+            if not hasattr(voice_clients[guild_id], 'loop_enabled'):
+                voice_clients[guild_id].loop_enabled = False
+            
+            voice_clients[guild_id].loop_enabled = True
+            await message.channel.send("🔁 تم تفعيل تكرار الأغنية")
+        else:
+            await message.channel.send("❌ لا توجد أغنية قيد التشغيل!")
+    except Exception as e:
+        await message.channel.send(f"❌ خطأ في تفعيل التكرار: {str(e)}")
 
 async def stop_loop(message):
     """إيقاف تكرار الأغنية"""
-    await message.channel.send("🔄 ميزة التكرار غير متوفرة حالياً")
+    try:
+        guild_id = message.guild.id
+        if guild_id in voice_clients:
+            if hasattr(voice_clients[guild_id], 'loop_enabled'):
+                voice_clients[guild_id].loop_enabled = False
+                await message.channel.send("⏹️ تم إيقاف تكرار الأغنية")
+            else:
+                await message.channel.send("❌ التكرار غير مفعل أصلاً!")
+        else:
+            await message.channel.send("❌ البوت غير متصل!")
+    except Exception as e:
+        await message.channel.send(f"❌ خطأ في إيقاف التكرار: {str(e)}")
 
 async def pause_song(message):
     """إيقاف مؤقت للأغنية"""
