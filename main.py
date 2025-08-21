@@ -168,6 +168,16 @@ async def on_message(message):
     if message.content == 'يوتيوب':
         await test_youtube_connection(message)
         return
+        
+    # أمر اختبار Cookies
+    if message.content == 'كوكيز':
+        await test_cookies(message)
+        return
+    
+    # أمر إنشاء Cookies جديدة
+    if message.content == 'كوكيز_جديد':
+        await create_new_cookies(message)
+        return
 
 async def play_song(message):
     """تشغيل الأغنية"""
@@ -211,6 +221,9 @@ async def play_song(message):
             fast_opts['no_warnings'] = True
             fast_opts['extract_flat'] = False  # نحتاج معلومات كاملة للتشغيل
             
+            # إضافة رسالة تأكيد
+            await message.channel.send("🔍 جاري البحث باستخدام Cookies...")
+            
             with yt_dlp.YoutubeDL(fast_opts) as ydl:
                 # البحث في YouTube
                 search_query = f"ytsearch1:{song_name}"  # نتيجة واحدة فقط
@@ -223,11 +236,12 @@ async def play_song(message):
                     return
         except Exception as e:
             error_msg = str(e).lower()
-            if "certificate" in error_msg or "ssl" in error_msg:
-                await message.channel.send("❌ مشكلة في الاتصال الآمن. جاري المحاولة مرة أخرى...")
-                # محاولة مع إعدادات مختلفة
-                try:
-                    alt_opts = yt_dl_opts.copy()
+                            if "certificate" in error_msg or "ssl" in error_msg:
+                    await message.channel.send("❌ مشكلة في الاتصال الآمن. جاري المحاولة مرة أخرى...")
+                    # محاولة مع إعدادات مختلفة
+                    try:
+                        await message.channel.send("🔄 المحاولة الثانية: إعدادات بديلة...")
+                        alt_opts = yt_dl_opts.copy()
                     alt_opts['source_address'] = None
                     alt_opts['extract_flat'] = False
                     alt_opts['format'] = 'bestaudio/best'
@@ -251,6 +265,7 @@ async def play_song(message):
                 except Exception as e2:
                     # محاولة أخيرة مع إعدادات متقدمة لحل مشكلة YouTube
                     try:
+                        await message.channel.send("🔄 المحاولة الثالثة: إعدادات متقدمة...")
                         advanced_opts = {
                             'format': 'bestaudio/best',
                             'quiet': True,
@@ -274,7 +289,10 @@ async def play_song(message):
                             'max_sleep_interval': 10,
                             'sleep_interval_requests': 2,
                             'geo_bypass': True,
-                            'geo_bypass_country': 'US'
+                            'geo_bypass_country': 'US',
+                            'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
+                            'no_check_certificate': True,
+                            'prefer_insecure': True
                         }
                         with yt_dlp.YoutubeDL(advanced_opts) as ydl:
                             info = ydl.extract_info(search_query, download=False)
@@ -656,6 +674,119 @@ async def test_youtube_connection(message):
                 
     except Exception as e:
         await message.channel.send(f"❌ خطأ في الاختبار: {str(e)}")
+
+async def test_cookies(message):
+    """اختبار Cookies"""
+    try:
+        await message.channel.send("🔍 جاري اختبار Cookies...")
+        
+        # التحقق من وجود ملف cookies
+        if not os.path.exists('youtube_cookies.txt'):
+            await message.channel.send("❌ **ملف Cookies غير موجود!**\n\n"
+                                     "🔧 **الحل:**\n"
+                                     "1. تأكد من وجود ملف youtube_cookies.txt\n"
+                                     "2. تأكد من أن الملف يحتوي على cookies صحيحة")
+            return
+        
+        # قراءة ملف cookies
+        try:
+            with open('youtube_cookies.txt', 'r', encoding='utf-8') as f:
+                cookies_content = f.read()
+            
+            if not cookies_content.strip() or cookies_content.startswith('#'):
+                await message.channel.send("❌ **ملف Cookies فارغ أو يحتوي على تعليقات فقط!**\n\n"
+                                         "🔧 **الحل:**\n"
+                                         "1. تأكد من أن الملف يحتوي على cookies حقيقية\n"
+                                         "2. استخدم extension 'Get cookies.txt' في Chrome\n"
+                                         "3. أو استخدم الأمر 'كوكيز' لإنشاء cookies جديدة")
+                return
+            
+            # اختبار cookies مع yt-dlp
+            test_opts = {
+                'format': 'bestaudio/best',
+                'quiet': True,
+                'no_warnings': True,
+                'extract_flat': True,
+                'cookies': 'youtube_cookies.txt'
+            }
+            
+            with yt_dlp.YoutubeDL(test_opts) as ydl:
+                # اختبار مع فيديو قصير
+                info = ydl.extract_info("https://www.youtube.com/watch?v=dQw4w9WgXcQ", download=False)
+                if info:
+                    await message.channel.send("✅ **Cookies تعمل بشكل مثالي!** 🎉\n\n"
+                                             "🔓 البوت يمكنه الآن الوصول إلى YouTube\n"
+                                             "🎵 جرب تشغيل أغنية الآن!")
+                else:
+                    await message.channel.send("⚠️ Cookies موجودة لكن لا يمكن استخراج المعلومات")
+                    
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "sign in to confirm" in error_msg or "bot" in error_msg:
+                await message.channel.send("❌ **YouTube يكتشف البوت!**\n\n"
+                                         "🔧 **الحلول المقترحة:**\n"
+                                         "1. أعد تسجيل الدخول في YouTube\n"
+                                         "2. امسح cookies وأعد إنشاءها\n"
+                                         "3. استخدم حساب شخصي وليس حساب عمل\n"
+                                         "4. جرب البحث مرة أخرى")
+            else:
+                await message.channel.send(f"❌ خطأ في اختبار Cookies: {str(e)}")
+                
+    except Exception as e:
+        await message.channel.send(f"❌ خطأ في الاختبار: {str(e)}")
+
+async def create_new_cookies(message):
+    """إنشاء cookies جديدة"""
+    try:
+        await message.channel.send("🔧 جاري إنشاء cookies جديدة...")
+        
+        # محاولة استخراج cookies من Chrome
+        try:
+            import browser_cookie3
+            
+            # استخراج cookies من Chrome
+            cookies = browser_cookie3.chrome(domain_name='.youtube.com')
+            
+            if not cookies:
+                await message.channel.send("❌ **لا توجد cookies في Chrome!**\n\n"
+                                         "🔧 **الحل:**\n"
+                                         "1. تأكد من تسجيل دخولك في YouTube\n"
+                                         "2. افتح YouTube في Chrome\n"
+                                         "3. جرب مرة أخرى")
+                return
+            
+            # إنشاء ملف cookies جديد
+            with open('youtube_cookies.txt', 'w', encoding='utf-8') as f:
+                f.write("# Netscape HTTP Cookie File\n")
+                f.write("# تم إنشاؤه تلقائياً بواسطة البوت\n\n")
+                
+                for cookie in cookies:
+                    # تنسيق Netscape
+                    secure = "TRUE" if cookie.secure else "FALSE"
+                    path = cookie.path or "/"
+                    expires = cookie.expires or 0
+                    
+                    f.write(f"{cookie.domain}\t{secure}\t{path}\t{expires}\t{cookie.name}\t{cookie.value}\n")
+            
+            await message.channel.send("✅ **تم إنشاء cookies جديدة بنجاح!** 🎉\n\n"
+                                     "🔓 البوت يمكنه الآن الوصول إلى YouTube\n"
+                                     "🎵 جرب تشغيل أغنية الآن!")
+            
+        except ImportError:
+            await message.channel.send("❌ **مكتبة browser-cookie3 غير مثبتة!**\n\n"
+                                     "🔧 **الحل:**\n"
+                                     "1. البوت يحتاج مكتبة إضافية\n"
+                                     "2. أو استخدم extension 'Get cookies.txt' في Chrome")
+        except Exception as e:
+            await message.channel.send(f"❌ **خطأ في استخراج cookies:** {str(e)}\n\n"
+                                     "🔧 **الحل البديل:**\n"
+                                     "1. استخدم extension 'Get cookies.txt' في Chrome\n"
+                                     "2. اذهب إلى YouTube\n"
+                                     "3. انقر على Extension ثم 'Export'\n"
+                                     "4. احفظ الملف كـ youtube_cookies.txt")
+                
+    except Exception as e:
+        await message.channel.send(f"❌ خطأ في إنشاء cookies: {str(e)}")
 
 def start_keep_alive():
     """بدء Keep Alive لمنع إغلاق البوت"""
