@@ -371,12 +371,21 @@ async def play_song(message):
                     await message.channel.send("🔗 جاري الاتصال بالقناة الصوتية...")
                 else:
                     # رسالة فشل البحث جميلة
-                    error_embed = discord.Embed(
-                        title="❌ لم يتم العثور على الأغنية",
-                        description="فشل البحث في جميع المصادر",
-                        color=0xff0000
-                    )
-                    error_embed.add_field(name="💡 نصائح", value="• تأكد من كتابة اسم الأغنية بشكل صحيح\n• جرب كلمات مختلفة\n• تأكد من وجود اتصال إنترنت", inline=False)
+                    if is_url:
+                        error_embed = discord.Embed(
+                            title="❌ فشل في استخراج الرابط",
+                            description="لا يمكن استخراج معلومات من هذا الرابط",
+                            color=0xff0000
+                        )
+                        error_embed.add_field(name="💡 نصائح", value="• تأكد من أن الرابط صحيح\n• جرب رابط آخر\n• تأكد من أن الرابط متاح", inline=False)
+                    else:
+                        error_embed = discord.Embed(
+                            title="❌ لم يتم العثور على الأغنية",
+                            description="فشل البحث في جميع المصادر",
+                            color=0xff0000
+                        )
+                        error_embed.add_field(name="💡 نصائح", value="• تأكد من كتابة اسم الأغنية بشكل صحيح\n• جرب كلمات مختلفة\n• تأكد من وجود اتصال إنترنت", inline=False)
+                    
                     await message.channel.send(embed=error_embed)
                     return
                     
@@ -523,28 +532,53 @@ def get_direct_url_info(url):
     try:
         print(f"🔗 استخراج معلومات من: {url}")
         
-        # إعدادات بسيطة للروابط المباشرة
+        # إعدادات محسنة للروابط المباشرة
         url_opts = {
-            'format': 'bestaudio',
-            'quiet': True,
-            'no_warnings': True,
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'quiet': False,  # لرؤية الأخطاء
+            'no_warnings': False,  # لرؤية التحذيرات
             'extract_flat': False,
-            'skip_download': True
+            'skip_download': True,
+            'extractaudio': True,
+            'audioformat': 'm4a'
         }
         
         with yt_dlp.YoutubeDL(url_opts) as ydl:
             # استخراج معلومات الرابط
             info = ydl.extract_info(url, download=False)
+            print(f"🔍 معلومات الرابط: {info}")
             
             if info and 'title' in info:
                 print(f"✅ تم استخراج: {info.get('title', 'بدون عنوان')}")
+                print(f"🔗 URL: {info.get('url', 'غير متوفر')}")
+                print(f"📊 المدة: {info.get('duration', 'غير متوفر')}")
                 return info
             else:
                 print("❌ فشل في استخراج معلومات الرابط")
+                print(f"🔍 المحتوى: {info}")
                 return None
                 
     except Exception as e:
         print(f"❌ خطأ في استخراج الرابط: {e}")
+        # محاولة بديلة مع إعدادات مختلفة
+        try:
+            print("🔄 المحاولة البديلة مع إعدادات مختلفة...")
+            alt_opts = {
+                'format': 'bestaudio',
+                'quiet': False,
+                'no_warnings': False,
+                'extract_flat': False,
+                'skip_download': True
+            }
+            
+            with yt_dlp.YoutubeDL(alt_opts) as ydl2:
+                info = ydl2.extract_info(url, download=False)
+                if info and 'title' in info:
+                    print(f"✅ تم استخراج بالطريقة البديلة: {info.get('title', 'بدون عنوان')}")
+                    return info
+        except Exception as e2:
+            print(f"❌ فشلت المحاولة البديلة: {e2}")
+        
         return None
 
 def search_soundcloud(query):
