@@ -38,7 +38,7 @@ yt_dl_opts = {
     'no_check_certificate': True,
     'prefer_insecure': True,
     'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'cookiesfrombrowser': ('chrome',),  # استخدام cookies من Chrome
+    'cookiesfrombrowser': None,  # تعطيل cookies من المتصفح
     'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
     'geo_bypass': True,
     'geo_bypass_country': 'US',
@@ -234,7 +234,7 @@ async def play_song(message):
                     alt_opts['http_headers'] = {
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                     }
-                    alt_opts['cookiesfrombrowser'] = ('chrome',)  # استخدام cookies من Chrome
+                    alt_opts['cookiesfrombrowser'] = None  # تعطيل cookies من المتصفح
                     alt_opts['cookies'] = 'youtube_cookies.txt'
                     alt_opts['extractor_retries'] = 5
                     alt_opts['fragment_retries'] = 5
@@ -265,7 +265,7 @@ async def play_song(message):
                                 'DNT': '1',
                                 'Upgrade-Insecure-Requests': '1'
                             },
-                            'cookiesfrombrowser': ('chrome',),  # استخدام cookies من Chrome
+                            'cookiesfrombrowser': None,  # تعطيل cookies من المتصفح
                             'cookies': 'youtube_cookies.txt',
                             'extractor_retries': 10,
                             'fragment_retries': 10,
@@ -629,7 +629,7 @@ async def test_youtube_connection(message):
             'no_warnings': True,
             'extract_flat': True,
             'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'cookiesfrombrowser': ('chrome',),  # استخدام cookies من Chrome
+            'cookiesfrombrowser': None,  # تعطيل cookies من المتصفح
             'cookies': 'youtube_cookies.txt'
         }
         
