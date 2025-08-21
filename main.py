@@ -134,7 +134,7 @@ async def on_message(message):
         return
 
     # أمر تشغيل الأغنية
-    if message.content.startswith('ش '):
+    if message.content.startswith('ش'):
         await play_song(message)
         return
 
@@ -230,11 +230,11 @@ async def play_song(message):
             await message.channel.send("⚠️ البوت يحتاج صلاحية 'Use Voice Activity' للعمل بشكل أفضل")
 
         # فصل اسم الأغنية
-        if len(message.content) < 3:
+        if len(message.content) < 2:
             await message.channel.send("❌ يرجى كتابة اسم الأغنية! مثال: ش despacito")
             return
         
-        song_name = message.content[2:].strip()
+        song_name = message.content[1:].strip()
         if not song_name:
             await message.channel.send("❌ يرجى كتابة اسم الأغنية!")
             return
