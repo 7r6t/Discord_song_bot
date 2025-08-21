@@ -42,19 +42,29 @@ yt_dl_opts = {
     'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
     'geo_bypass': True,
     'geo_bypass_country': 'US',
+    'geo_bypass_ip_block': '1.1.1.1',
+    'force_generic_extractor': False,
     'http_headers': {
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-us,en;q=0.5',
-        'Sec-Fetch-Mode': 'navigate'
+        'Sec-Fetch-Mode': 'navigate',
+        'DNT': '1',
+        'Upgrade-Insecure-Requests': '1',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive'
     },
     'cookies': 'youtube_cookies.txt',
-    'extractor_retries': 5,
-    'fragment_retries': 5,
-    'retries': 5,
-    'sleep_interval': 1,
-    'max_sleep_interval': 5,
-    'sleep_interval_requests': 1
+    'extractor_retries': 10,
+    'fragment_retries': 10,
+    'retries': 10,
+    'sleep_interval': 2,
+    'max_sleep_interval': 10,
+    'sleep_interval_requests': 2,
+    'socket_timeout': 30,
+    'max_downloads': 1,
+    'nocheckcertificate': True,
+    'prefer_ffmpeg': True
 }
 
 ffmpeg_options = {
