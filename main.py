@@ -41,7 +41,7 @@ yt_dl_opts = {
                 'cookiesfrombrowser': None,
                 'cookies': 'youtube_cookies.txt',
                 'cookiefile': 'youtube_cookies.txt',
-                'extractor_args': {'youtube': {'skip': ['dash', 'live'], 'player_client': ['android', 'web']}},
+                'extractor_args': {'youtube': {'skip': ['dash', 'live'], 'player_client': ['android', 'web'], 'player_skip': ['webpage', 'configs']}},
                 'geo_bypass': True,
                 'geo_bypass_country': 'US',
                 'geo_bypass_ip_block': '1.1.1.1/24',
@@ -258,72 +258,59 @@ async def play_song(message):
             with yt_dlp.YoutubeDL(fast_opts) as ydl:
                 # البحث في YouTube
                 # البحث في YouTube مع معالجة أفضل
-                search_query = f"ytsearch1:{song_name}"  # نتيجة واحدة فقط
-                # محاولة البحث المباشر أولاً
+                # محاولة البحث المباشر أولاً (الأفضل)
                 direct_search = song_name
-                # محاولة البحث بدون ytsearch
+                # محاولة البحث البسيط
                 simple_search = song_name
-                await message.channel.send(f"🔍 جاري البحث عن: {search_query}")
+                # محاولة البحث مع ytsearch (الأقل موثوقية)
+                search_query = f"ytsearch1:{song_name}"
+                # نبدأ بالبحث المباشر (الأكثر موثوقية)
+                await message.channel.send("🔍 جاري البحث المباشر...")
                 try:
-                    # محاولة البحث مع معالجة أفضل للأخطاء
-                    info = ydl.extract_info(search_query, download=False)
+                    direct_info = ydl.extract_info(direct_search, download=False)
                     
-                    # التحقق من صحة البيانات
-                    if not info:
-                        await message.channel.send("❌ لم يتم الحصول على معلومات البحث!")
+                    if direct_info and 'title' in direct_info:
+                        video_info = direct_info
+                        await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
+                    else:
+                        await message.channel.send("❌ فشل البحث المباشر!")
                         return
-                    
-                    if 'entries' not in info:
-                        await message.channel.send("❌ لم يتم العثور على نتائج البحث!")
-                        return
-                    
-                    if not info['entries']:
-                        await message.channel.send("❌ لم يتم العثور على الأغنية!")
-                        return
-                    
-                    video_info = info['entries'][0]
-                    if not video_info:
-                        await message.channel.send("❌ لم يتم العثور على معلومات الفيديو!")
-                        return
-                    
-                    await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
-                    
-                except Exception as search_error:
-                    error_msg = str(search_error)
-                    await message.channel.send(f"❌ خطأ في البحث: {error_msg}")
-                    
-                    # محاولة البحث المباشر
-                    try:
-                        await message.channel.send("🔄 المحاولة الثانية: البحث المباشر...")
-                        direct_info = ydl.extract_info(direct_search, download=False)
                         
-                        if direct_info and 'title' in direct_info:
-                            video_info = direct_info
+                except Exception as direct_error:
+                    await message.channel.send(f"❌ فشل البحث المباشر: {str(direct_error)}")
+                    
+                    # محاولة ثانية: البحث البسيط
+                    try:
+                        await message.channel.send("🔄 المحاولة الثانية: البحث البسيط...")
+                        simple_info = ydl.extract_info(simple_search, download=False)
+                        
+                        if simple_info and 'title' in simple_info:
+                            video_info = simple_info
                             await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
                         else:
-                            await message.channel.send("❌ فشل البحث المباشر أيضاً!")
+                            await message.channel.send("❌ فشل البحث البسيط أيضاً!")
                             return
                             
-                    except Exception as direct_error:
-                        await message.channel.send(f"❌ فشل البحث المباشر: {str(direct_error)}")
+                    except Exception as simple_error:
+                        await message.channel.send(f"❌ فشل البحث البسيط: {str(simple_error)}")
                         
-                        # محاولة ثالثة: البحث البسيط
+                        # محاولة ثالثة: البحث مع ytsearch (الأقل موثوقية)
                         try:
-                            await message.channel.send("🔄 المحاولة الثالثة: البحث البسيط...")
-                            simple_info = ydl.extract_info(simple_search, download=False)
+                            await message.channel.send("🔄 المحاولة الثالثة: البحث مع ytsearch...")
+                            info = ydl.extract_info(search_query, download=False)
                             
-                            if simple_info and 'title' in simple_info:
-                                video_info = simple_info
+                            if info and 'entries' in info and info['entries']:
+                                video_info = info['entries'][0]
                                 await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
                             else:
-                                await message.channel.send("❌ فشل البحث البسيط أيضاً!")
+                                await message.channel.send("❌ فشل البحث مع ytsearch أيضاً!")
                                 return
                                 
-                        except Exception as simple_error:
-                            await message.channel.send(f"❌ فشل البحث البسيط: {str(simple_error)}")
+                        except Exception as search_error:
+                            await message.channel.send(f"❌ فشل البحث مع ytsearch: {str(search_error)}")
                             
                             # إذا كان الخطأ يتعلق بـ cookies
-                            if "cookies" in error_msg.lower():
+                            if "cookies" in str(search_error).lower():
                                 await message.channel.send("🔧 **مشكلة في Cookies!**\nاستخدم أمر `كوكيز` لاختبار Cookies")
                             return
         except Exception as e:
