@@ -442,6 +442,17 @@ async def play_song(message):
             if voice_client.is_playing():
                 await message.channel.send("⏹️ إيقاف الأغنية الحالية...")
                 voice_client.stop()
+            
+            # التحقق من أن المتغيرات موجودة
+            if 'url' not in locals() or not url:
+                await message.channel.send("❌ خطأ: رابط الصوت غير متوفر!")
+                return
+                
+            if 'title' not in locals() or not title:
+                title = "أغنية"
+                
+            if 'duration' not in locals():
+                duration = 0
                 
             await message.channel.send(f"🔗 جاري تحميل: {url[:100]}...")
             audio_source = discord.FFmpegPCMAudio(url, **ffmpeg_options)
@@ -466,6 +477,7 @@ async def play_song(message):
                     duration_str = "غير معروف"
             except:
                 duration_str = "غير معروف"
+                
             embed = discord.Embed(
                 title="🎵 تم تشغيل الأغنية",
                 description=f"**{title}**",
