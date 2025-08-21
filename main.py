@@ -52,8 +52,7 @@ yt_dl_opts = {
             'innertube_key': 'AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w'
         },
         'soundcloud': {
-            'skip': ['hls', 'opus'],
-            'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio'
+            'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio[!ext=opus][!ext=ogg][!ext=hls]'
         }
     },
     'geo_bypass': True,
@@ -98,8 +97,8 @@ yt_dl_opts = {
 
 # إعدادات FFmpeg محسنة لـ SoundCloud و YouTube
 ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -protocol_whitelist file,http,https,tcp,tls,crypto',
-    'options': '-vn -filter:a "volume=1.0,highpass=f=50,lowpass=f=8000,equalizer=f=1000:width_type=o:width=2:g=-5,equalizer=f=3000:width_type=o:width=2:g=3,equalizer=f=5000:width_type=o:width=2:g=5"'
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -protocol_whitelist file,http,https,tcp,tls,crypto -allowed_extensions ALL',
+    'options': '-vn -filter:a "volume=1.0,highpass=f=50,lowpass=f=8000,equalizer=f=1000:width_type=o:width=2:g=-5,equalizer=f=3000:width_type=o:width=2:g=3,equalizer=f=5000:width_type=o:width=2:g=5,aresample=48000"'
 }
 
 # Flask app للـ Keep Alive
@@ -310,7 +309,7 @@ async def play_song(message):
             fast_opts['sleep_interval'] = 1  # انتظار قصير بين الطلبات
             fast_opts['max_sleep_interval'] = 3  # انتظار أقصى قصير
             fast_opts['sleep_interval_requests'] = 1  # انتظار قصير بين الطلبات
-            fast_opts['format'] = 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio'
+            fast_opts['format'] = 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio[ext=wav]/bestaudio[abr>=192]/bestaudio[abr>=128]/bestaudio[!ext=opus][!ext=ogg][!ext=hls]'
 
             # البحث أو تشغيل الرابط المباشر
             if is_url:
