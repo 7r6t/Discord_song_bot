@@ -39,10 +39,7 @@ yt_dl_opts = {
                 'prefer_insecure': True,
                 'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'cookiesfrombrowser': None,
-                'cookies': 'youtube_cookies.txt',
-                'cookiefile': 'youtube_cookies.txt',
-                'cookiesfile': 'youtube_cookies.txt',
-                'extractor_args': {'youtube': {'skip': ['dash', 'live'], 'player_client': ['android', 'web'], 'player_skip': ['webpage', 'configs'], 'skip': ['dash', 'live', 'hls']}},
+                'extractor_args': {'youtube': {'skip': ['dash', 'live', 'hls'], 'player_client': ['android', 'web', 'tv', 'ios'], 'player_skip': ['webpage', 'configs'], 'innertube_host': 'www.youtube.com', 'innertube_key': 'AIzaSyA8eiZmM1FaDVjRy-df2KTyQ_vz_yYM39w'}},
                 'geo_bypass': True,
                 'geo_bypass_country': 'US',
                 'geo_bypass_ip_block': '1.1.1.1/24',
@@ -253,11 +250,13 @@ async def play_song(message):
             fast_opts['no_check_certificate'] = True  # تجاهل شهادات SSL
             fast_opts['prefer_insecure'] = True  # تفضيل الاتصال غير الآمن
             fast_opts['skip_download'] = True  # تخطي التحميل
-            fast_opts['no_check_cookies'] = False  # فحص Cookies
+            fast_opts['no_check_cookies'] = True  # تعطيل فحص Cookies
             fast_opts['cookies_from_browser'] = None  # تعطيل cookies من المتصفح
+            fast_opts['mark_watched'] = False  # عدم تسجيل المشاهدة
+            fast_opts['writeinfojson'] = False  # عدم كتابة ملف JSON
             
             # إضافة رسالة تأكيد
-            await message.channel.send("🔍 جاري البحث باستخدام Cookies...")
+            await message.channel.send("🔍 جاري البحث بدون Cookies...")
             
             with yt_dlp.YoutubeDL(fast_opts) as ydl:
                 # البحث في YouTube
