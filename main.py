@@ -174,7 +174,7 @@ async def on_message(message):
         await test_cookies(message)
         return
     
-    # أمر إنشاء Cookies جديدة
+    # أمر إنشاء Cookies جديدة (يعمل محلياً فقط)
     if message.content == 'كوكيز_جديد':
         await create_new_cookies(message)
         return
@@ -736,9 +736,11 @@ async def test_cookies(message):
         await message.channel.send(f"❌ خطأ في الاختبار: {str(e)}")
 
 async def create_new_cookies(message):
-    """إنشاء cookies جديدة"""
+    """إنشاء cookies جديدة (يعمل محلياً فقط، لا يعمل على Render.com)"""
     try:
-        await message.channel.send("🔧 جاري إنشاء cookies جديدة...")
+        await message.channel.send("🔧 جاري إنشاء cookies جديدة...\n\n"
+                                 "⚠️ **ملاحظة:** هذا الأمر يعمل محلياً فقط\n"
+                                 "🚫 على Render.com، استخدم extension 'Get cookies.txt'")
         
         # محاولة استخراج cookies من Chrome
         try:

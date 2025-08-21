@@ -3,7 +3,6 @@ FROM python:3.11-slim
 # تثبيت المتطلبات الأساسية
 RUN apt-get update && apt-get install -y \
     ffmpeg \
-    chromium-browser \
     && rm -rf /var/lib/apt/lists/*
 
 # تعيين مجلد العمل
