@@ -274,15 +274,15 @@ async def play_song(message):
         duration = 0
 
         try:
-            # إعدادات بحث سريعة
+            # إعدادات بحث محسنة
             fast_opts = yt_dl_opts.copy()
-            fast_opts['socket_timeout'] = 10  # timeout أقصر
-            fast_opts['retries'] = 1  # محاولة واحدة فقط
+            fast_opts['socket_timeout'] = 20  # timeout أطول للبحث
+            fast_opts['retries'] = 3  # محاولات أكثر للنجاح
             fast_opts['extract_flat'] = False
-            fast_opts['skip_download'] = False
-            fast_opts['sleep_interval'] = 0  # بدون انتظار
-            fast_opts['max_sleep_interval'] = 0  # بدون انتظار
-            fast_opts['sleep_interval_requests'] = 0  # بدون انتظار
+            fast_opts['skip_download'] = True
+            fast_opts['sleep_interval'] = 1  # انتظار قصير بين الطلبات
+            fast_opts['max_sleep_interval'] = 3  # انتظار أقصى قصير
+            fast_opts['sleep_interval_requests'] = 1  # انتظار قصير بين الطلبات
 
             # البحث أو تشغيل الرابط المباشر
             if is_url:
@@ -355,23 +355,23 @@ async def play_song(message):
                     description=f"**{song_name}**",
                     color=0x0099ff
                 )
-                search_embed.add_field(name="⏱️ الوقت المتوقع", value="5 ثواني", inline=True)
-                search_embed.add_field(name="🌐 المصدر", value="SoundCloud + YouTube", inline=True)
+                search_embed.add_field(name="⏱️ الوقت المتوقع", value="15 ثانية", inline=True)
+                search_embed.add_field(name="🌐 المصدر", value="SoundCloud", inline=True)
                 await message.channel.send(embed=search_embed)
                 
                 try:
-                    # البحث في SoundCloud و YouTube
+                    # البحث في SoundCloud
                     video_info = await asyncio.wait_for(
                         asyncio.get_event_loop().run_in_executor(
                             None, 
                             search_youtube, song_name, fast_opts
                         ),
-                        timeout=5
+                        timeout=15  # timeout أطول للبحث
                     )
                 except asyncio.TimeoutError:
                     timeout_embed = discord.Embed(
                         title="⏰ انتهت مهلة البحث",
-                        description="البحث استغرق أكثر من 5 ثواني",
+                        description="البحث استغرق أكثر من 15 ثانية",
                         color=0xff9900
                     )
                     timeout_embed.add_field(name="💡 نصيحة", value="جرب مرة أخرى بكلمات مختلفة أو انتظر قليلاً", inline=False)
