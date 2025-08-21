@@ -298,6 +298,25 @@ async def play_song(message):
                         await message.channel.send("❌ فشل البحث المباشر - لا توجد نتائج!")
                         return
                         
+                except Exception as search_error:
+                    await message.channel.send(f"❌ فشل البحث: {str(search_error)}")
+                    
+                    # محاولة بديلة: البحث المباشر بدون ytsearch
+                    try:
+                        await message.channel.send("🔄 المحاولة البديلة: البحث المباشر...")
+                        direct_video_info = ydl.extract_info(direct_search, download=False)
+                        
+                        if direct_video_info and 'title' in direct_video_info:
+                            video_info = direct_video_info
+                            await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
+                        else:
+                            await message.channel.send("❌ فشل البحث المباشر أيضاً!")
+                            return
+                            
+                    except Exception as direct_error:
+                        await message.channel.send(f"❌ فشل البحث المباشر: {str(direct_error)}")
+                        return
+                        
                 except Exception as direct_error:
                     error_msg = str(direct_error)
                     await message.channel.send(f"❌ فشل البحث المباشر: {error_msg}")
