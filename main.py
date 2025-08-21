@@ -305,6 +305,41 @@ async def play_song(message):
                         ),
                         timeout=10  # timeout أطول للروابط
                     )
+                    
+                    # التحقق من أن video_info موجود وصحيح
+                    if not video_info:
+                        error_embed = discord.Embed(
+                            title="❌ فشل في الحصول على معلومات الرابط",
+                            description="لم يتم العثور على معلومات صحيحة",
+                            color=0xff0000
+                        )
+                        error_embed.add_field(name="💡 نصائح", value="• تأكد من أن الرابط صحيح\n• جرب رابط آخر\n• تأكد من أن الرابط متاح", inline=False)
+                        await message.channel.send(embed=error_embed)
+                        return
+                    
+                    # التحقق من وجود URL
+                    if 'url' not in video_info or not video_info['url']:
+                        error_embed = discord.Embed(
+                            title="❌ فشل في الحصول على رابط الصوت",
+                            description="الرابط غير متوفر أو غير صحيح",
+                            color=0xff0000
+                        )
+                        error_embed.add_field(name="🔍 معلومات", value=f"المحتوى: {str(video_info)[:200]}...", inline=False)
+                        await message.channel.send(embed=error_embed)
+                        return
+                    
+                    # استخراج المعلومات
+                    url = video_info['url']
+                    title = video_info.get('title', 'أغنية')
+                    duration = video_info.get('duration', 0)
+                    
+                    # طباعة معلومات التشخيص
+                    print(f"✅ معلومات الأغنية:")
+                    print(f"   العنوان: {title}")
+                    print(f"   الرابط: {url}")
+                    print(f"   المدة: {duration}")
+                    print(f"   المصدر: {video_info.get('extractor', 'غير معروف')}")
+                    
                 except asyncio.TimeoutError:
                     timeout_embed = discord.Embed(
                         title="⏰ انتهت مهلة استخراج الرابط",
