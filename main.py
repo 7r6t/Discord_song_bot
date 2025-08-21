@@ -98,7 +98,7 @@ yt_dl_opts = {
 
 # إعدادات FFmpeg محسنة لـ SoundCloud و YouTube
 ffmpeg_options = {
-    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -protocol_whitelist file,http,https,tcp,tls,crypto -allowed_extensions ALL',
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -protocol_whitelist file,http,https,tcp,tls,crypto',
     'options': '-vn -filter:a "volume=1.0,highpass=f=50,lowpass=f=8000,equalizer=f=1000:width_type=o:width=2:g=-5,equalizer=f=3000:width_type=o:width=2:g=3,equalizer=f=5000:width_type=o:width=2:g=5,aresample=48000"'
 }
 
@@ -312,7 +312,6 @@ async def play_song(message):
         else:
             # إذا كان اسم، ابحث عنه
             song_name = song_input
-            await message.channel.send(f"🔍 جاري البحث عن: {song_name}...")
 
         # البحث مع timeout قصير
         video_info = None
