@@ -265,10 +265,13 @@ async def play_song(message):
         try:
             # إعدادات بحث سريعة
             fast_opts = yt_dl_opts.copy()
-            fast_opts['socket_timeout'] = 15
-            fast_opts['retries'] = 2
+            fast_opts['socket_timeout'] = 10  # timeout أقصر
+            fast_opts['retries'] = 1  # محاولة واحدة فقط
             fast_opts['extract_flat'] = False
             fast_opts['skip_download'] = False
+            fast_opts['sleep_interval'] = 0  # بدون انتظار
+            fast_opts['max_sleep_interval'] = 0  # بدون انتظار
+            fast_opts['sleep_interval_requests'] = 0  # بدون انتظار
 
             await message.channel.send("🔍 جاري البحث بدون Cookies...")
             
@@ -361,49 +364,74 @@ def search_youtube(query, opts):
         with yt_dlp.YoutubeDL(opts) as ydl:
             print(f"🔍 البحث عن: {query}")
             
-            # محاولة 1: البحث باستخدام ytsearch
+            # محاولة 1: البحث باستخدام ytsearch (الأسرع)
             try:
-                print("🔍 المحاولة 1: ytsearch")
+                print("🔍 المحاولة 1: ytsearch (سريع)")
                 search_results = ydl.extract_info(f"ytsearch1:{query}", download=False)
-                print(f"نتائج البحث: {search_results}")
+                print(f"نتائج ytsearch: {search_results}")
                 
                 if search_results and 'entries' in search_results and search_results['entries']:
                     first_result = search_results['entries'][0]
-                    print(f"تم العثور على: {first_result.get('title', 'بدون عنوان')}")
+                    print(f"✅ تم العثور على: {first_result.get('title', 'بدون عنوان')}")
                     return first_result
                 else:
-                    print("لا توجد نتائج في ytsearch")
+                    print("❌ لا توجد نتائج في ytsearch")
             except Exception as e1:
-                print(f"خطأ في ytsearch: {e1}")
+                print(f"❌ خطأ في ytsearch: {e1}")
             
-            # محاولة 2: البحث المباشر
+            # محاولة 2: البحث باستخدام ytsearch5 (متقدم)
             try:
-                print("🔍 المحاولة 2: البحث المباشر")
-                info = ydl.extract_info(query, download=False)
-                print(f"نتيجة البحث المباشر: {info}")
-                
-                if info and 'title' in info:
-                    print(f"تم العثور على: {info.get('title', 'بدون عنوان')}")
-                    return info
-                else:
-                    print("لا توجد نتائج في البحث المباشر")
-            except Exception as e2:
-                print(f"خطأ في البحث المباشر: {e2}")
-            
-            # محاولة 3: البحث باستخدام ytsearch5
-            try:
-                print("🔍 المحاولة 3: ytsearch5")
+                print("🔍 المحاولة 2: ytsearch5 (متقدم)")
                 search_results = ydl.extract_info(f"ytsearch5:{query}", download=False)
                 print(f"نتائج ytsearch5: {search_results}")
                 
                 if search_results and 'entries' in search_results and search_results['entries']:
                     first_result = search_results['entries'][0]
-                    print(f"تم العثور على: {first_result.get('title', 'بدون عنوان')}")
+                    print(f"✅ تم العثور على: {first_result.get('title', 'بدون عنوان')}")
                     return first_result
                 else:
-                    print("لا توجد نتائج في ytsearch5")
+                    print("❌ لا توجد نتائج في ytsearch5")
+            except Exception as e2:
+                print(f"❌ خطأ في ytsearch5: {e2}")
+            
+            # محاولة 3: البحث المباشر (بدون ytsearch)
+            try:
+                print("🔍 المحاولة 3: البحث المباشر")
+                # تجربة البحث كرابط مباشر
+                if "youtube.com" in query or "youtu.be" in query:
+                    info = ydl.extract_info(query, download=False)
+                else:
+                    # تجربة البحث ككلمات
+                    info = ydl.extract_info(f"ytsearch:{query}", download=False)
+                
+                print(f"نتيجة البحث المباشر: {info}")
+                
+                if info and 'title' in info:
+                    print(f"✅ تم العثور على: {info.get('title', 'بدون عنوان')}")
+                    return info
+                elif info and 'entries' in info and info['entries']:
+                    first_result = info['entries'][0]
+                    print(f"✅ تم العثور على: {first_result.get('title', 'بدون عنوان')}")
+                    return first_result
+                else:
+                    print("❌ لا توجد نتائج في البحث المباشر")
             except Exception as e3:
-                print(f"خطأ في ytsearch5: {e3}")
+                print(f"❌ خطأ في البحث المباشر: {e3}")
+            
+            # محاولة 4: البحث باستخدام ytsearch10 (أكثر نتائج)
+            try:
+                print("🔍 المحاولة 4: ytsearch10 (أكثر نتائج)")
+                search_results = ydl.extract_info(f"ytsearch10:{query}", download=False)
+                print(f"نتائج ytsearch10: {search_results}")
+                
+                if search_results and 'entries' in search_results and search_results['entries']:
+                    first_result = search_results['entries'][0]
+                    print(f"✅ تم العثور على: {first_result.get('title', 'بدون عنوان')}")
+                    return first_result
+                else:
+                    print("❌ لا توجد نتائج في ytsearch10")
+            except Exception as e4:
+                print(f"❌ خطأ في ytsearch10: {e4}")
                 
         print("❌ فشلت جميع محاولات البحث")
         return None
