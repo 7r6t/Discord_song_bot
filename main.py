@@ -343,51 +343,65 @@ async def play_song(message):
                     await message.channel.send(embed=timeout_embed)
                     return
                 
-                if video_info and 'url' in video_info:
-                    url = video_info['url']
-                    title = video_info.get('title', 'أغنية')
-                    duration = video_info.get('duration', 0)
-                    
-                    # رسالة نجاح البحث جميلة
-                    try:
-                        if duration > 0:
-                            duration_minutes = int(duration // 60)
-                            duration_seconds = int(duration % 60)
-                            duration_str = f"{duration_minutes}:{duration_seconds:02d}"
-                        else:
-                            duration_str = "غير معروف"
-                    except:
-                        duration_str = "غير معروف"
-                    
-                    success_embed = discord.Embed(
-                        title="✅ تم العثور على الأغنية!",
-                        description=f"**{title}**",
-                        color=0x00ff00
+                # التحقق من أن video_info موجود وصحيح
+                if not video_info:
+                    error_embed = discord.Embed(
+                        title="❌ فشل في الحصول على معلومات الأغنية",
+                        description="لم يتم العثور على معلومات صحيحة",
+                        color=0xff0000
                     )
-                    success_embed.add_field(name="🎵 المصدر", value=video_info.get('extractor', 'غير معروف'), inline=True)
-                    success_embed.add_field(name="⏱️ المدة", value=duration_str, inline=True)
-                    await message.channel.send(embed=success_embed)
-                    
-                    await message.channel.send("🔗 جاري الاتصال بالقناة الصوتية...")
-                else:
-                    # رسالة فشل البحث جميلة
                     if is_url:
-                        error_embed = discord.Embed(
-                            title="❌ فشل في استخراج الرابط",
-                            description="لا يمكن استخراج معلومات من هذا الرابط",
-                            color=0xff0000
-                        )
                         error_embed.add_field(name="💡 نصائح", value="• تأكد من أن الرابط صحيح\n• جرب رابط آخر\n• تأكد من أن الرابط متاح", inline=False)
                     else:
-                        error_embed = discord.Embed(
-                            title="❌ لم يتم العثور على الأغنية",
-                            description="فشل البحث في جميع المصادر",
-                            color=0xff0000
-                        )
                         error_embed.add_field(name="💡 نصائح", value="• تأكد من كتابة اسم الأغنية بشكل صحيح\n• جرب كلمات مختلفة\n• تأكد من وجود اتصال إنترنت", inline=False)
                     
                     await message.channel.send(embed=error_embed)
                     return
+                
+                # التحقق من وجود URL
+                if 'url' not in video_info or not video_info['url']:
+                    error_embed = discord.Embed(
+                        title="❌ فشل في الحصول على رابط الصوت",
+                        description="الرابط غير متوفر أو غير صحيح",
+                        color=0xff0000
+                    )
+                    error_embed.add_field(name="🔍 معلومات", value=f"المحتوى: {str(video_info)[:200]}...", inline=False)
+                    await message.channel.send(embed=error_embed)
+                    return
+                
+                # استخراج المعلومات
+                url = video_info['url']
+                title = video_info.get('title', 'أغنية')
+                duration = video_info.get('duration', 0)
+                
+                # طباعة معلومات التشخيص
+                print(f"✅ معلومات الأغنية:")
+                print(f"   العنوان: {title}")
+                print(f"   الرابط: {url}")
+                print(f"   المدة: {duration}")
+                print(f"   المصدر: {video_info.get('extractor', 'غير معروف')}")
+                
+                # رسالة نجاح البحث جميلة
+                try:
+                    if duration > 0:
+                        duration_minutes = int(duration // 60)
+                        duration_seconds = int(duration % 60)
+                        duration_str = f"{duration_minutes}:{duration_seconds:02d}"
+                    else:
+                        duration_str = "غير معروف"
+                except:
+                    duration_str = "غير معروف"
+                
+                success_embed = discord.Embed(
+                    title="✅ تم العثور على الأغنية!",
+                    description=f"**{title}**",
+                    color=0x00ff00
+                )
+                success_embed.add_field(name="🎵 المصدر", value=video_info.get('extractor', 'غير معروف'), inline=True)
+                success_embed.add_field(name="⏱️ المدة", value=duration_str, inline=True)
+                await message.channel.send(embed=success_embed)
+                
+                await message.channel.send("🔗 جاري الاتصال بالقناة الصوتية...")
                     
         except Exception as e:
             await message.channel.send(f"❌ خطأ في البحث: {str(e)[:100]}...")
