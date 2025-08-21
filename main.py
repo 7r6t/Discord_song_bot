@@ -301,13 +301,23 @@ async def play_song(message):
                     duration = video_info.get('duration', 0)
                     
                     # رسالة نجاح البحث جميلة
+                    try:
+                        if duration > 0:
+                            duration_minutes = int(duration // 60)
+                            duration_seconds = int(duration % 60)
+                            duration_str = f"{duration_minutes}:{duration_seconds:02d}"
+                        else:
+                            duration_str = "غير معروف"
+                    except:
+                        duration_str = "غير معروف"
+                    
                     success_embed = discord.Embed(
                         title="✅ تم العثور على الأغنية!",
                         description=f"**{title}**",
                         color=0x00ff00
                     )
                     success_embed.add_field(name="🎵 المصدر", value=video_info.get('extractor', 'غير معروف'), inline=True)
-                    success_embed.add_field(name="⏱️ المدة", value=f"{duration//60}:{duration%60:02d}" if duration > 0 else "غير معروف", inline=True)
+                    success_embed.add_field(name="⏱️ المدة", value=duration_str, inline=True)
                     await message.channel.send(embed=success_embed)
                     
                     await message.channel.send("🔗 جاري الاتصال بالقناة الصوتية...")
@@ -339,20 +349,27 @@ async def play_song(message):
 
         # الاتصال بالقناة الصوتية
         try:
+            await message.channel.send("🔗 جاري الاتصال بالقناة الصوتية...")
+            
             if guild_id in voice_clients:
                 voice_client = voice_clients[guild_id]
                 if voice_client.is_connected():
                     if voice_client.channel != voice_channel:
+                        await message.channel.send("🔄 نقل البوت إلى القناة الصوتية...")
                         await voice_client.move_to(voice_channel)
+                    else:
+                        await message.channel.send("✅ البوت متصل بالفعل")
                 else:
+                    await message.channel.send("🔌 إعادة الاتصال بالقناة الصوتية...")
                     await voice_client.disconnect()
                     voice_client = await voice_channel.connect(timeout=10.0)
                     voice_clients[guild_id] = voice_client
             else:
+                await message.channel.send("🔌 إنشاء اتصال جديد...")
                 voice_client = await voice_channel.connect(timeout=10.0)
                 voice_clients[guild_id] = voice_client
                 
-            await message.channel.send("🔗 تم الاتصال بالقناة الصوتية")
+            await message.channel.send("✅ تم الاتصال بالقناة الصوتية بنجاح!")
             
         except Exception as e:
             await message.channel.send(f"❌ خطأ في الاتصال: {str(e)}")
@@ -360,16 +377,24 @@ async def play_song(message):
 
         # تشغيل الأغنية
         try:
+            await message.channel.send("🎵 جاري تشغيل الأغنية...")
+            
             if voice_client.is_playing():
+                await message.channel.send("⏹️ إيقاف الأغنية الحالية...")
                 voice_client.stop()
                 
+            await message.channel.send(f"🔗 جاري تحميل: {url[:100]}...")
             audio_source = discord.FFmpegPCMAudio(url, **ffmpeg_options)
             
             def after_playing(error):
                 if error:
                     print(f"خطأ في التشغيل: {error}")
+                    asyncio.create_task(message.channel.send(f"❌ خطأ في التشغيل: {error}"))
+                else:
+                    print("تم انتهاء الأغنية بنجاح")
             
             voice_client.play(audio_source, after=after_playing)
+            await message.channel.send("▶️ تم بدء تشغيل الأغنية!")
             
             # إرسال رسالة تأكيد
             try:
