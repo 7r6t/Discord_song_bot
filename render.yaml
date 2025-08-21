@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: discord-music-bot
+    env: docker
+    plan: free
+    buildCommand: docker build -t discord-bot .
+    startCommand: python main.py
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11 
