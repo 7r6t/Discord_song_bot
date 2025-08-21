@@ -376,15 +376,8 @@ async def play_song(message):
                     await message.channel.send(embed=timeout_embed)
                     return
             else:
-                # إذا كان اسم، ابحث عنه
-                search_embed = discord.Embed(
-                    title="🔍 البحث عن الأغنية",
-                    description=f"**{song_name}**",
-                    color=0x0099ff
-                )
-                search_embed.add_field(name="⏱️ الوقت المتوقع", value="15 ثانية", inline=True)
-                search_embed.add_field(name="🌐 المصدر", value="SoundCloud", inline=True)
-                await message.channel.send(embed=search_embed)
+                # رسالة بحث مختصرة
+                await message.channel.send(f"🔍 جاري البحث عن: **{song_name}**...")
                 
                 try:
                     # البحث في SoundCloud
@@ -443,25 +436,7 @@ async def play_song(message):
                 print(f"   المدة: {duration}")
                 print(f"   المصدر: {video_info.get('extractor', 'غير معروف')}")
                 
-                # رسالة نجاح البحث جميلة
-                try:
-                    if duration > 0:
-                        duration_minutes = int(duration // 60)
-                        duration_seconds = int(duration % 60)
-                        duration_str = f"{duration_minutes}:{duration_seconds:02d}"
-                    else:
-                        duration_str = "غير معروف"
-                except:
-                    duration_str = "غير معروف"
-                
-                success_embed = discord.Embed(
-                    title="✅ تم العثور على الأغنية!",
-                    description=f"**{title}**",
-                    color=0x00ff00
-                )
-                success_embed.add_field(name="🎵 المصدر", value=video_info.get('extractor', 'غير معروف'), inline=True)
-                success_embed.add_field(name="⏱️ المدة", value=duration_str, inline=True)
-                await message.channel.send(embed=success_embed)
+                # لا نرسل رسالة نجاح البحث - سنرسل رسالة واحدة فقط عند التشغيل
                 
                     
         except Exception as e:
@@ -525,14 +500,8 @@ async def play_song(message):
             except:
                 duration_str = "غير معروف"
                 
-            embed = discord.Embed(
-                title="🎵 تم تشغيل الأغنية",
-                description=f"**{title}**",
-                color=0x00ff00
-            )
-            embed.add_field(name="⏱️ المدة", value=duration_str, inline=True)
-            embed.add_field(name="👤 الطالب", value=message.author.mention, inline=True)
-            await message.channel.send(embed=embed)
+            # رسالة تشغيل مختصرة
+            await message.channel.send(f"🎵 **{title}** | ⏱️ {duration_str} | 👤 {message.author.mention}")
             
         except Exception as e:
             await message.channel.send(f"❌ خطأ في تشغيل الأغنية: {str(e)}")
