@@ -44,7 +44,7 @@ yt_dl_opts = {
                 'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
                 'geo_bypass': True,
                 'geo_bypass_country': 'US',
-                'geo_bypass_ip_block': '1.1.1.1',
+                'geo_bypass_ip_block': '1.1.1.1/24',
                 'force_generic_extractor': False,
                 'http_headers': {
                     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -374,7 +374,7 @@ async def play_song(message):
                             'sleep_interval_requests': 3,
                             'geo_bypass': True,
                             'geo_bypass_country': 'US',
-                            'geo_bypass_ip_block': '1.1.1.1',
+                            'geo_bypass_ip_block': '1.1.1.1/24',
                             'force_generic_extractor': False,
                             'extractor_args': {'youtube': {'skip': ['dash', 'live']}},
                             'no_check_certificate': True,
