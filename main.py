@@ -342,7 +342,15 @@ async def play_song(message):
             voice_client.play(audio_source, after=after_playing)
             
             # إرسال رسالة تأكيد
-            duration_str = f"{duration//60}:{duration%60:02d}" if duration > 0 else "غير معروف"
+            try:
+                if duration > 0:
+                    duration_minutes = int(duration // 60)
+                    duration_seconds = int(duration % 60)
+                    duration_str = f"{duration_minutes}:{duration_seconds:02d}"
+                else:
+                    duration_str = "غير معروف"
+            except:
+                duration_str = "غير معروف"
             embed = discord.Embed(
                 title="🎵 تم تشغيل الأغنية",
                 description=f"**{title}**",
