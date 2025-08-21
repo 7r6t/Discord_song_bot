@@ -4,7 +4,9 @@ import asyncio
 import yt_dlp
 import os
 import ssl
-from config import DISCORD_TOKEN, BOT_STATUS
+# قراءة التوكن من متغيرات البيئة أو من config.py
+DISCORD_TOKEN = os.getenv('DISCORD_TOKEN') or 'YOUR_DISCORD_BOT_TOKEN_HERE'
+BOT_STATUS = "🎵 استمع للموسيقى"
 
 # إصلاح مشكلة SSL
 os.environ['PYTHONHTTPSVERIFY'] = '0'
