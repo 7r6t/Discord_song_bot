@@ -102,57 +102,133 @@ ffmpeg_options = {
     'options': '-vn -filter:a "volume=1.0,highpass=f=50,lowpass=f=8000,equalizer=f=1000:width_type=o:width=2:g=-5,equalizer=f=3000:width_type=o:width=2:g=3,equalizer=f=5000:width_type=o:width=2:g=5,aresample=48000"'
 }
 
-# Flask app للـ Keep Alive
+# Flask app للـ Keep Alive محسن لـ Render
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Discord Bot is running!"
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    uptime = time.time() - start_time if 'start_time' in globals() else 0
+    return f"""
+    <html>
+    <head><title>Discord Music Bot - Running</title></head>
+    <body style="font-family: Arial; text-align: center; margin-top: 50px;">
+        <h1>🎵 Discord Music Bot is Running!</h1>
+        <p><strong>Status:</strong> ✅ Active</p>
+        <p><strong>Current Time:</strong> {current_time}</p>
+        <p><strong>Uptime:</strong> {int(uptime/60)} minutes</p>
+        <p><strong>Bot:</strong> fvq songs</p>
+        <hr>
+        <p style="color: green;">Keep Alive is working properly!</p>
+    </body>
+    </html>
+    """
 
 @app.route('/health')
 def health():
-    return jsonify({"status": "healthy", "bot": "running"})
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    uptime = time.time() - start_time if 'start_time' in globals() else 0
+    return jsonify({
+        "status": "healthy", 
+        "bot": "running",
+        "service": "fvq-songs-discord-bot",
+        "timestamp": current_time,
+        "uptime_minutes": int(uptime/60),
+        "keep_alive": "active"
+    })
+
+@app.route('/ping')
+def ping():
+    return jsonify({"pong": True, "timestamp": time.time()})
+
+# متغير لتتبع وقت البداية
+start_time = time.time()
 
 def start_web_server():
-    """تشغيل الخادم الويب في خيط منفصل"""
+    """تشغيل الخادم الويب في خيط منفصل - محسن لـ Render"""
     try:
         port = int(os.environ.get("PORT", 8080))
         print(f"🌐 بدء الخادم الويب على المنفذ {port}...")
-        app.run(host="0.0.0.0", port=port, debug=False, threaded=True)
+        print(f"🔗 الرابط: https://your-app-name.onrender.com")
+        
+        # إعدادات محسنة للخادم
+        app.run(
+            host="0.0.0.0", 
+            port=port, 
+            debug=False, 
+            threaded=True,
+            use_reloader=False,  # مهم لـ Render
+            processes=1  # عملية واحدة فقط
+        )
     except Exception as e:
         print(f"❌ فشل في بدء الخادم الويب: {e}")
+        import traceback
+        traceback.print_exc()
 
 def start_keep_alive():
-    """تشغيل Keep Alive في خيط منفصل"""
+    """تشغيل Keep Alive محسن لـ Render"""
     def keep_alive():
-        print("🚀 بدء Keep Alive...")
+        print("🚀 بدء Keep Alive محسن لـ Render...")
+        ping_count = 0
+        
         while True:
             try:
-                time.sleep(20)
+                # انتظار أقصر لمنع النوم
+                time.sleep(25)  # كل 25 ثانية
+                ping_count += 1
                 current_time = time.strftime("%H:%M:%S")
-                print(f"🔄 Keep Alive: البوت يعمل... [{current_time}]")
                 
-                # إرسال ping للخادم إذا كان متاحاً
+                print(f"🔄 Keep Alive #{ping_count}: البوت يعمل... [{current_time}]")
+                
+                # محاولة ping للخادم المحلي أولاً
+                try:
+                    port = int(os.environ.get("PORT", 8080))
+                    local_url = f"http://localhost:{port}/ping"
+                    response = requests.get(local_url, timeout=3)
+                    print(f"✅ Local ping: {response.status_code}")
+                except Exception as local_e:
+                    print(f"⚠️ Local ping failed: {local_e}")
+                
+                # محاولة ping للـ KEEP_ALIVE_URL إذا كان موجود
                 keep_alive_url = os.environ.get("KEEP_ALIVE_URL")
                 if keep_alive_url:
                     try:
                         response = requests.get(keep_alive_url, timeout=5)
-                        print(f"✅ Keep Alive ping: {response.status_code}")
+                        print(f"✅ External Keep Alive ping: {response.status_code}")
                     except Exception as e:
-                        print(f"❌ Keep Alive ping failed: {e}")
+                        print(f"❌ External Keep Alive ping failed: {e}")
                 else:
-                    print("ℹ️ KEEP_ALIVE_URL غير محدد")
+                    # إنشاء URL تلقائي للـ Render
+                    render_app_name = os.environ.get("RENDER_SERVICE_NAME")
+                    if render_app_name:
+                        auto_url = f"https://{render_app_name}.onrender.com/ping"
+                        try:
+                            response = requests.get(auto_url, timeout=5)
+                            print(f"✅ Auto Render ping: {response.status_code}")
+                        except Exception as e:
+                            print(f"❌ Auto Render ping failed: {e}")
+                    else:
+                        print("ℹ️ KEEP_ALIVE_URL و RENDER_SERVICE_NAME غير محددين")
+                
+                # إحصائيات إضافية كل 10 pings
+                if ping_count % 10 == 0:
+                    uptime = time.time() - start_time
+                    print(f"📊 Keep Alive Stats: {ping_count} pings, {int(uptime/60)} minutes uptime")
                     
             except Exception as e:
                 print(f"❌ خطأ في Keep Alive: {e}")
-                time.sleep(5)  # انتظار قصير قبل المحاولة مرة أخرى
+                import traceback
+                traceback.print_exc()
+                time.sleep(10)  # انتظار أطول عند الخطأ
     
     try:
-        thread = threading.Thread(target=keep_alive, daemon=True, name="KeepAlive")
+        thread = threading.Thread(target=keep_alive, daemon=True, name="KeepAlive-Enhanced")
         thread.start()
-        print("✅ Keep Alive thread بدأ بنجاح")
+        print("✅ Keep Alive Enhanced thread بدأ بنجاح")
     except Exception as e:
         print(f"❌ فشل في بدء Keep Alive: {e}")
+        import traceback
+        traceback.print_exc()
 
 @bot.event
 async def on_ready():
@@ -1071,9 +1147,30 @@ async def test_cookies(message):
     """اختبار ملف Cookies"""
     await message.channel.send("ℹ️ البوت لا يستخدم Cookies حالياً - تم إزالة الاعتماد عليها")
 
-# تشغيل البوت
+# تشغيل البوت مع إعدادات محسنة لـ Render
 if __name__ == "__main__":
     if DISCORD_TOKEN == 'YOUR_DISCORD_BOT_TOKEN_HERE':
         print("❌ يرجى تعيين DISCORD_TOKEN في متغيرات البيئة")
+        print("💡 في Render، اذهب إلى Environment Variables وأضف:")
+        print("   DISCORD_TOKEN = your_bot_token_here")
     else:
-        bot.run(DISCORD_TOKEN)
+        print("🚀 بدء Discord Bot...")
+        print("🌐 منصة الاستضافة: Render")
+        print("🔧 Keep Alive: محسن ومفعل")
+        
+        try:
+            # تشغيل البوت مع معالجة الأخطاء
+            bot.run(DISCORD_TOKEN, log_handler=None)
+        except Exception as e:
+            print(f"❌ خطأ في تشغيل البوت: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # إعادة المحاولة بعد 30 ثانية
+            print("🔄 إعادة المحاولة بعد 30 ثانية...")
+            time.sleep(30)
+            try:
+                bot.run(DISCORD_TOKEN, log_handler=None)
+            except Exception as e2:
+                print(f"❌ فشل في إعادة المحاولة: {e2}")
+                exit(1)

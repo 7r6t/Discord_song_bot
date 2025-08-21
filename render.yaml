@@ -1,18 +1,32 @@
 services:
   - type: web
-    name: discord-music-bot
-    env: docker
+    name: fvq-songs-bot
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
     plan: free
-    buildCommand: docker build -t discord-bot .
-    startCommand: python main.py
+    region: oregon
+    branch: main
+    healthCheckPath: /health
     envVars:
       - key: DISCORD_TOKEN
-        sync: false
-      - key: PYTHON_VERSION
-        value: 3.11
-      - key: KEEP_ALIVE_URL
-        value: https://discord-music-bot.onrender.com
+        sync: false  # سيتم تعيينه يدوياً في لوحة التحكم
       - key: PORT
         value: 8080
-    healthCheckPath: /health
-    autoDeploy: true 
+      - key: KEEP_ALIVE_URL
+        value: https://fvq-songs-bot.onrender.com/ping
+      - key: RENDER_SERVICE_NAME
+        value: fvq-songs-bot
+    autoDeploy: true
+    preDeployCommand: "echo 'Preparing Discord Bot deployment...'"
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+    disk:
+      name: data
+      mountPath: /app/data
+      sizeGB: 1
