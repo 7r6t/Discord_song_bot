@@ -24,6 +24,7 @@ bot = commands.Bot(command_prefix='', intents=intents)
 
 # متغيرات عامة
 voice_clients = {}
+music_queues = {}  # قوائم التشغيل لكل سيرفر
 
 # إعدادات yt-dlp محسنة لتجنب YouTube bot detection
 yt_dl_opts = {
@@ -212,6 +213,21 @@ async def on_message(message):
     # أمر إيقاف التكرار
     if message.content == 'ا':
         await stop_loop(message)
+        return
+
+    # أمر إضافة أغنية للقائمة
+    if message.content.startswith('ضف'):
+        await add_to_queue(message)
+        return
+
+    # أمر عرض القائمة
+    if message.content == 'قائمة':
+        await show_queue(message)
+        return
+
+    # أمر مسح القائمة
+    if message.content == 'مسح':
+        await clear_queue(message)
         return
 
     # أمر اختبار البوت
@@ -713,6 +729,168 @@ async def stop_loop(message):
             await message.channel.send("❌ البوت غير متصل!")
     except Exception as e:
         await message.channel.send(f"❌ خطأ في إيقاف التكرار: {str(e)}")
+
+async def add_to_queue(message):
+    """إضافة أغنية لقائمة التشغيل"""
+    try:
+        if not message.content.startswith('ضف '):
+            await message.channel.send("❌ استخدم: ضف اسم_الأغنية")
+            return
+        
+        song_name = message.content[3:].strip()
+        if not song_name:
+            await message.channel.send("❌ اكتب اسم الأغنية!")
+            return
+        
+        guild_id = message.guild.id
+        
+        # البحث عن الأغنية
+        await message.channel.send(f"🔍 جاري البحث عن: **{song_name}**...")
+        
+        try:
+            video_info = await asyncio.wait_for(
+                asyncio.get_event_loop().run_in_executor(
+                    None, 
+                    search_youtube, song_name, yt_dl_opts
+                ),
+                timeout=15
+            )
+        except asyncio.TimeoutError:
+            await message.channel.send("⏰ انتهت مهلة البحث")
+            return
+        
+        if not video_info or 'url' not in video_info:
+            await message.channel.send("❌ لم يتم العثور على الأغنية")
+            return
+        
+        # إضافة الأغنية للقائمة
+        if guild_id not in music_queues:
+            music_queues[guild_id] = []
+        
+        song_data = {
+            'title': video_info.get('title', 'أغنية'),
+            'url': video_info['url'],
+            'duration': video_info.get('duration', 0),
+            'requester': message.author.mention
+        }
+        
+        music_queues[guild_id].append(song_data)
+        
+        # رسالة تأكيد
+        duration_str = "غير معروف"
+        if song_data['duration'] > 0:
+            duration_minutes = int(song_data['duration'] // 60)
+            duration_seconds = int(song_data['duration'] % 60)
+            duration_str = f"{duration_minutes}:{duration_seconds:02d}"
+        
+        await message.channel.send(f"✅ تمت الإضافة: **{song_data['title']}** | ⏱️ {duration_str} | 👤 {message.author.mention}")
+        
+        # إذا لم تكن هناك أغنية تعمل، ابدأ التشغيل
+        if guild_id not in voice_clients or not voice_clients[guild_id].is_playing():
+            await play_next_song(message.guild)
+            
+    except Exception as e:
+        await message.channel.send(f"❌ خطأ في إضافة الأغنية: {str(e)}")
+
+async def show_queue(message):
+    """عرض قائمة التشغيل"""
+    try:
+        guild_id = message.guild.id
+        
+        if guild_id not in music_queues or not music_queues[guild_id]:
+            await message.channel.send("📋 قائمة التشغيل فارغة")
+            return
+        
+        queue = music_queues[guild_id]
+        embed = discord.Embed(title="📋 قائمة التشغيل", color=0x0099ff)
+        
+        for i, song in enumerate(queue[:10], 1):  # عرض أول 10 أغاني
+            duration_str = "غير معروف"
+            if song['duration'] > 0:
+                duration_minutes = int(song['duration'] // 60)
+                duration_seconds = int(song['duration'] % 60)
+                duration_str = f"{duration_minutes}:{duration_seconds:02d}"
+            
+            embed.add_field(
+                name=f"{i}. {song['title']}",
+                value=f"⏱️ {duration_str} | 👤 {song['requester']}",
+                inline=False
+            )
+        
+        if len(queue) > 10:
+            embed.add_field(name="...", value=f"و {len(queue) - 10} أغنية أخرى", inline=False)
+        
+        await message.channel.send(embed=embed)
+        
+    except Exception as e:
+        await message.channel.send(f"❌ خطأ في عرض القائمة: {str(e)}")
+
+async def clear_queue(message):
+    """مسح قائمة التشغيل"""
+    try:
+        guild_id = message.guild.id
+        
+        if guild_id in music_queues:
+            music_queues[guild_id].clear()
+            await message.channel.send("🗑️ تم مسح قائمة التشغيل")
+        else:
+            await message.channel.send("📋 قائمة التشغيل فارغة أصلاً")
+            
+    except Exception as e:
+        await message.channel.send(f"❌ خطأ في مسح القائمة: {str(e)}")
+
+async def play_next_song(guild):
+    """تشغيل الأغنية التالية في القائمة"""
+    try:
+        guild_id = guild.id
+        
+        if guild_id not in music_queues or not music_queues[guild_id]:
+            return
+        
+        if guild_id not in voice_clients or not voice_clients[guild_id].is_connected():
+            return
+        
+        # أخذ الأغنية التالية
+        song_data = music_queues[guild_id].pop(0)
+        
+        # تشغيل الأغنية
+        voice_client = voice_clients[guild_id]
+        
+        if voice_client.is_playing():
+            voice_client.stop()
+        
+        audio_source = discord.FFmpegPCMAudio(song_data['url'], **ffmpeg_options)
+        
+        def after_playing(error):
+            if error:
+                print(f"خطأ في التشغيل: {error}")
+            else:
+                print("تم انتهاء الأغنية بنجاح")
+                # التحقق من التكرار
+                if hasattr(voice_client, 'loop_enabled') and voice_client.loop_enabled:
+                    print("🔄 التكرار مفعل - إعادة تشغيل الأغنية")
+                    try:
+                        new_audio_source = discord.FFmpegPCMAudio(song_data['url'], **ffmpeg_options)
+                        voice_client.play(new_audio_source, after=after_playing)
+                    except Exception as e:
+                        print(f"❌ خطأ في إعادة التشغيل: {e}")
+                else:
+                    # تشغيل الأغنية التالية
+                    asyncio.create_task(play_next_song(guild))
+        
+        voice_client.play(audio_source, after=after_playing)
+        
+        # رسالة تأكيد
+        duration_str = "غير معروف"
+        if song_data['duration'] > 0:
+            duration_minutes = int(song_data['duration'] // 60)
+            duration_seconds = int(song_data['duration'] % 60)
+            duration_str = f"{duration_minutes}:{duration_seconds:02d}"
+        
+        await guild.system_channel.send(f"🎵 **{song_data['title']}** | ⏱️ {duration_str} | 👤 {song_data['requester']}")
+        
+    except Exception as e:
+        print(f"❌ خطأ في تشغيل الأغنية التالية: {e}")
 
 async def pause_song(message):
     """إيقاف مؤقت للأغنية"""
