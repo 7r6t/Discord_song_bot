@@ -252,7 +252,6 @@ async def play_song(message):
             fast_opts['ignoreerrors'] = True  # تجاهل بعض الأخطاء
             fast_opts['no_check_certificate'] = True  # تجاهل شهادات SSL
             fast_opts['prefer_insecure'] = True  # تفضيل الاتصال غير الآمن
-            fast_opts['extract_flat'] = True  # استخراج مسطح للبحث
             fast_opts['skip_download'] = True  # تخطي التحميل
             fast_opts['no_check_cookies'] = False  # فحص Cookies
             fast_opts['cookies_from_browser'] = None  # تعطيل cookies من المتصفح
@@ -272,17 +271,30 @@ async def play_song(message):
                 # نبدأ بالبحث المباشر (الأكثر موثوقية)
                 await message.channel.send("🔍 جاري البحث المباشر...")
                 try:
+                    await message.channel.send(f"🔍 جاري البحث عن: {direct_search}")
                     direct_info = ydl.extract_info(direct_search, download=False)
                     
                     if direct_info and 'title' in direct_info:
                         video_info = direct_info
                         await message.channel.send(f"✅ تم العثور على: **{video_info.get('title', 'أغنية')}**")
+                    elif direct_info:
+                        await message.channel.send(f"⚠️ تم العثور على معلومات لكن بدون عنوان: {str(direct_info)[:100]}...")
+                        return
                     else:
-                        await message.channel.send("❌ فشل البحث المباشر!")
+                        await message.channel.send("❌ فشل البحث المباشر - لا توجد معلومات!")
                         return
                         
                 except Exception as direct_error:
-                    await message.channel.send(f"❌ فشل البحث المباشر: {str(direct_error)}")
+                    error_msg = str(direct_error)
+                    await message.channel.send(f"❌ فشل البحث المباشر: {error_msg}")
+                    
+                    # إذا كان الخطأ يتعلق بـ cookies
+                    if "cookies" in error_msg.lower():
+                        await message.channel.send("🔧 **مشكلة في Cookies!**\nاستخدم أمر `كوكيز` لاختبار Cookies")
+                    elif "sign in to confirm" in error_msg.lower():
+                        await message.channel.send("🔧 **YouTube يكتشف البوت!**\nجاري المحاولة بطريقة أخرى...")
+                    else:
+                        await message.channel.send(f"🔧 **خطأ غير متوقع:** {error_msg[:100]}...")
                     
                     # محاولة ثانية: البحث البسيط
                     try:
