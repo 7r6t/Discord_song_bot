@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # إعدادات Keep Alive
 KEEP_ALIVE_URL = os.getenv('KEEP_ALIVE_URL', 'https://your-app-name.onrender.com')
-PING_INTERVAL = 20  # ثانية
+PING_INTERVAL = 40  # ثانية
 
 @app.route('/')
 def home():
