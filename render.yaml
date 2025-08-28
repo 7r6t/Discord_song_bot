@@ -1,32 +1,24 @@
 services:
   - type: web
-    name: fvq-songs-bot
+    name: discord-music-bot
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python main.py"
     plan: free
-    region: oregon
-    branch: main
-    healthCheckPath: /health
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
     envVars:
       - key: DISCORD_TOKEN
-        sync: false  # سيتم تعيينه يدوياً في لوحة التحكم
-      - key: PORT
-        value: 8080
-      - key: KEEP_ALIVE_URL
-        value: https://fvq-songs-bot.onrender.com/ping
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONHTTPSVERIFY
+        value: "0"
       - key: RENDER_SERVICE_NAME
-        value: fvq-songs-bot
+        value: "discord-music-bot"
+    healthCheckPath: /health
     autoDeploy: true
-    preDeployCommand: "echo 'Preparing Discord Bot deployment...'"
-    headers:
-      - path: /*
-        name: X-Frame-Options
-        value: DENY
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
+    region: oregon
+    numInstances: 1
     disk:
-      name: data
+      name: bot-data
       mountPath: /app/data
       sizeGB: 1

@@ -1,21 +1,22 @@
 # Netscape HTTP Cookie File
-# This is an EXAMPLE file - replace with your actual cookies
-# To get real cookies:
-# 1. Install "Get cookies.txt" extension in Chrome
-# 2. Go to YouTube
-# 3. Click extension then "Export"
-# 4. Save as youtube_cookies.txt
+# https://curl.se/rfc/cookie_spec.html
+# This is a generated file! Do not edit.
+#
+# كيفية استخدام هذا الملف:
+# 1. ثبت extension "Get cookies.txt" في Chrome
+# 2. اذهب إلى YouTube وتأكد من تسجيل دخولك
+# 3. انقر على Extension ثم "Export"
+# 4. استبدل [YOUR_COOKIE_VALUE] بالقيم الحقيقية
+# 5. احفظ الملف باسم "youtube_cookies.txt"
+# 6. ضعه في نفس مجلد main.py
 
-# Example format (replace with real values):
-.youtube.com	TRUE	/	TRUE	1735689600	VISITOR_INFO1_LIVE	[YOUR_COOKIE_VALUE]
-.youtube.com	TRUE	/	TRUE	1735689600	LOGIN_INFO	[YOUR_COOKIE_VALUE]
-.youtube.com	TRUE	/	TRUE	1735689600	SID	[YOUR_COOKIE_VALUE]
-.youtube.com	TRUE	/	TRUE	1735689600	HSID	[YOUR_COOKIE_VALUE]
-.youtube.com	TRUE	/	TRUE	1735689600	SSID	[YOUR_COOKIE_VALUE]
-.youtube.com	TRUE	/	TRUE	1735689600	APISID	[YOUR_COOKIE_VALUE]
-.youtube.com	TRUE	/	TRUE	1735689600	SAPISID	[YOUR_COOKIE_VALUE]
-.youtube.com	TRUE	/	TRUE	1735689600	__Secure-1PAPISID	[YOUR_COOKIE_VALUE]
-.youtube.com	TRUE	/	TRUE	1735689600	__Secure-3PAPISID	[YOUR_COOKIE_VALUE]
+.youtube.com	TRUE	/	FALSE	1735689600	[YOUR_COOKIE_VALUE]
+.youtube.com	TRUE	/	FALSE	1735689600	[YOUR_COOKIE_VALUE]
+.youtube.com	TRUE	/	FALSE	1735689600	[YOUR_COOKIE_VALUE]
 
-# IMPORTANT: Replace [YOUR_COOKIE_VALUE] with actual cookie values
-# This file is for Render.com deployment 
+# ملاحظات مهمة:
+# - تأكد من تسجيل دخولك في YouTube
+# - استخدم حساب شخصي وليس حساب عمل
+# - أعد إنشاء Cookies كل 30-60 يوم
+# - لا تشارك هذا الملف مع أحد
+# - احتفظ بنسخة احتياطية من Cookies العاملة 
