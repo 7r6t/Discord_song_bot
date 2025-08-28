@@ -1,11 +1,11 @@
 [phases.setup]
-nixPkgs = ["python311", "ffmpeg", "python311Packages.discordpy", "python311Packages.yt-dlp", "python311Packages.pynacl", "python311Packages.python-dotenv"]
+nixPkgs = ["python311", "ffmpeg"]
 
 [phases.install]
-cmds = ["echo 'Dependencies installed via nixPkgs'"]
+cmds = ["python -m venv venv", "venv/bin/pip install -r requirements.txt"]
 
 [phases.build]
 cmds = ["echo 'Build completed successfully!'"]
 
 [start]
-cmd = "python main.py"
+cmd = "venv/bin/python main.py"
