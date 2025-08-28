@@ -8,7 +8,7 @@ from config import *
 
 # إصلاح مشكلة SSL
 os.environ['PYTHONHTTPSVERIFY'] = '0'
-ssl._create_default_https_context = ssl._unverified_context
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # إعداد البوت
 intents = discord.Intents.all()
