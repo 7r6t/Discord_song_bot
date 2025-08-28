@@ -20,6 +20,7 @@ bot = commands.Bot(command_prefix=DISCORD_PREFIX, intents=intents)
 # متغيرات عامة
 voice_clients = {}
 music_queues = {}
+health_server_started = False
 
 # Health Check Server
 class HealthCheckHandler(http.server.BaseHTTPRequestHandler):
@@ -35,13 +36,23 @@ class HealthCheckHandler(http.server.BaseHTTPRequestHandler):
 
 def start_health_server():
     """بدء خادم health check"""
+    global health_server_started
     try:
         port = int(os.environ.get('PORT', 8080))
+        # استخدام allow_reuse_address لتجنب مشاكل إعادة التشغيل
         with socketserver.TCPServer(("", port), HealthCheckHandler) as httpd:
+            httpd.allow_reuse_address = True
+            health_server_started = True
             print(f"🌐 Health check server running on port {port}")
             httpd.serve_forever()
     except Exception as e:
         print(f"❌ Failed to start health server: {e}")
+        health_server_started = False
+        # محاولة إعادة التشغيل بعد 5 ثوان
+        import time
+        time.sleep(5)
+        if not health_server_started:
+            start_health_server()
 
 # بدء خادم health check في thread منفصل
 health_thread = threading.Thread(target=start_health_server, daemon=True)
