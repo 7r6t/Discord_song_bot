@@ -7,6 +7,7 @@ import ssl
 import threading
 from flask import Flask
 from config import *
+from waitress import serve
 
 # إصلاح مشكلة SSL
 os.environ['PYTHONHTTPSVERIFY'] = '0'
@@ -29,22 +30,19 @@ def health_check():
     return 'OK', 200
 
 def start_health_server():
-    """بدء خادم health check باستخدام Flask"""
+    """بدء خادم health check باستخدام Waitress"""
     try:
         port = int(os.environ.get('PORT', 8080))
-        print(f"🌐 Starting Flask health check server on port {port}...")
+        print(f"🌐 Starting Waitress health check server on port {port}...")
         print(f"🔍 Server will respond to / and /health with 200 OK")
+        print(f"🌍 Server bound to 0.0.0.0:{port}")
+        print(f"⚡ Using 4 threads for better performance")
+        print(f"🔒 Connection limit: 1000")
         
-        # تشغيل Flask في وضع production مع إعدادات محسنة
-        app.run(
-            host='0.0.0.0', 
-            port=port, 
-            debug=False, 
-            use_reloader=False,
-            threaded=True
-        )
+        # تشغيل Waitress - خادم WSGI محسن للإنتاج
+        serve(app, host='0.0.0.0', port=port, threads=4, connection_limit=1000)
     except Exception as e:
-        print(f"❌ Failed to start Flask server: {e}")
+        print(f"❌ Failed to start Waitress server: {e}")
         import traceback
         traceback.print_exc()
 
