@@ -2,10 +2,10 @@
 nixPkgs = ["python311", "ffmpeg", "python311Packages.pip"]
 
 [phases.install]
-cmds = ["chmod +x start.sh"]
+cmds = ["pip install --user --break-system-packages --no-cache-dir -r requirements.txt", "echo 'Installation completed!'"]
 
 [phases.build]
-cmds = ["echo 'Build completed successfully!'"]
+cmds = ["echo 'Build completed successfully!'", "pip list --user", "echo 'Ready to start!'"]
 
 [start]
-cmd = "./start.sh"
+cmd = "python main.py"
