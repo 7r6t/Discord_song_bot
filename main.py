@@ -5,13 +5,12 @@ import yt_dlp
 import os
 import ssl
 import threading
-import http.server
-import socketserver
+from flask import Flask
 from config import *
 
 # إصلاح مشكلة SSL
 os.environ['PYTHONHTTPSVERIFY'] = '0'
-ssl._create_default_https_context = ssl._create_unverified_context
+ssl._create_default_https_context = ssl._unverified_context
 
 # إعداد البوت
 intents = discord.Intents.all()
@@ -20,38 +19,38 @@ bot = commands.Bot(command_prefix=DISCORD_PREFIX, intents=intents)
 # متغيرات عامة
 voice_clients = {}
 music_queues = {}
-health_server_started = False
 
-# Health Check Server
-class HealthCheckHandler(http.server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/' or self.path == '/health':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/plain')
-            self.end_headers()
-            self.wfile.write(b'OK')
-        else:
-            self.send_response(404)
-            self.end_headers()
+# Flask App for Health Check
+app = Flask(__name__)
+
+@app.route('/')
+@app.route('/health')
+def health_check():
+    return 'OK', 200
 
 def start_health_server():
-    """بدء خادم health check"""
+    """بدء خادم health check باستخدام Flask"""
     try:
         port = int(os.environ.get('PORT', 8080))
-        print(f"🌐 Starting health check server on port {port}...")
+        print(f"🌐 Starting Flask health check server on port {port}...")
+        print(f"🔍 Server will respond to / and /health with 200 OK")
         
-        # استخدام allow_reuse_address لتجنب مشاكل إعادة التشغيل
-        with socketserver.TCPServer(("0.0.0.0", port), HealthCheckHandler) as httpd:
-            httpd.allow_reuse_address = True
-            print(f"✅ Health check server running on port {port}")
-            httpd.serve_forever()
+        # تشغيل Flask في وضع production مع إعدادات محسنة
+        app.run(
+            host='0.0.0.0', 
+            port=port, 
+            debug=False, 
+            use_reloader=False,
+            threaded=True
+        )
     except Exception as e:
-        print(f"❌ Failed to start health server: {e}")
+        print(f"❌ Failed to start Flask server: {e}")
         import traceback
         traceback.print_exc()
 
 # بدء خادم health check في thread منفصل
-print("🚀 Starting Discord Bot with Health Check Server...")
+print("🚀 Starting Discord Bot with Flask Health Check Server...")
+print("🔍 Flask server will respond to / and /health with 200 OK")
 health_thread = threading.Thread(target=start_health_server, daemon=True)
 health_thread.start()
 
