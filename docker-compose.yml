@@ -3,13 +3,14 @@ version: '3.8'
 services:
   discord-bot:
     build: .
-    container_name: discord-music-bot
+    container_name: fvq-songs-bot
     restart: unless-stopped
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - PYTHONUNBUFFERED=1
       - PYTHONHTTPSVERIFY=0
       - PORT=8080
+      - RENDER_SERVICE_NAME=fvq-songs
     volumes:
       - ./config.py:/app/config.py
       - ./logs:/app/logs

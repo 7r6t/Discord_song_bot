@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: discord-music-bot
+    name: fvq-songs
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
@@ -13,7 +13,7 @@ services:
       - key: PYTHONHTTPSVERIFY
         value: "0"
       - key: RENDER_SERVICE_NAME
-        value: "discord-music-bot"
+        value: "fvq-songs"
       - key: PORT
         value: "8080"
     healthCheckPath: /health

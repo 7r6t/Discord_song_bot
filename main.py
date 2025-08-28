@@ -1170,6 +1170,42 @@ if __name__ == "__main__":
             print("✅ Keep Alive مفعل")
         except Exception as e:
             print(f"⚠️ Keep Alive غير متاح: {e}")
+            # Keep Alive محلي بسيط
+            def simple_keep_alive():
+                while True:
+                    try:
+                        import requests
+                        response = requests.get("https://fvq-songs.onrender.com/ping", timeout=5)
+                        if response.status_code == 200:
+                            print(f"✅ Keep Alive محلي: {response.json()}")
+                        else:
+                            print(f"⚠️ Keep Alive محلي: Status {response.status_code}")
+                    except Exception as e:
+                        print(f"❌ Keep Alive محلي: {e}")
+                    time.sleep(300)  # كل 5 دقائق
+            
+            keep_alive_thread = threading.Thread(target=simple_keep_alive, daemon=True)
+            keep_alive_thread.start()
+            print("✅ Keep Alive محلي مفعل")
+        
+        # Keep Alive إضافي للـ Render
+        def render_keep_alive():
+            while True:
+                try:
+                    import requests
+                    # محاولة الاتصال بالصفحة الرئيسية
+                    response = requests.get("https://fvq-songs.onrender.com/", timeout=10)
+                    if response.status_code == 200:
+                        print(f"✅ Render Keep Alive: البوت يعمل على {response.url}")
+                    else:
+                        print(f"⚠️ Render Keep Alive: Status {response.status_code}")
+                except Exception as e:
+                    print(f"❌ Render Keep Alive: {e}")
+                time.sleep(60)  # كل دقيقة
+        
+        render_thread = threading.Thread(target=render_keep_alive, daemon=True)
+        render_thread.start()
+        print("✅ Render Keep Alive مفعل")
         
         # بدء خادم HTTP بسيط لفتح منفذ
         import threading

@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 app = Flask(__name__)
 
 # إعدادات Keep Alive المحسنة
-KEEP_ALIVE_URL = os.getenv('KEEP_ALIVE_URL', 'https://discord-music-bot.onrender.com')
+KEEP_ALIVE_URL = os.getenv('KEEP_ALIVE_URL', 'https://fvq-songs.onrender.com')
 PING_INTERVAL = int(os.getenv('KEEP_ALIVE_INTERVAL', 300))  # 5 دقائق افتراضياً
-RENDER_SERVICE_NAME = os.getenv('RENDER_SERVICE_NAME', 'discord-music-bot')
+RENDER_SERVICE_NAME = os.getenv('RENDER_SERVICE_NAME', 'fvq-songs')
 PORT = int(os.getenv('PORT', 8080))
 
 # إحصائيات Keep Alive
