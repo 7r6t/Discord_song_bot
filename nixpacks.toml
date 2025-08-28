@@ -1,8 +1,8 @@
 [phases.setup]
-nixPkgs = ["python311", "ffmpeg", "python311Packages.pip", "python311Packages.setuptools"]
+nixPkgs = ["python311", "ffmpeg", "python311Packages.discordpy", "python311Packages.yt-dlp", "python311Packages.pynacl", "python311Packages.python-dotenv"]
 
 [phases.install]
-cmds = ["pip install --user -e ."]
+cmds = ["echo 'Dependencies installed via nixPkgs'"]
 
 [phases.build]
 cmds = ["echo 'Build completed successfully!'"]
