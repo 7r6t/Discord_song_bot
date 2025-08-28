@@ -19,4 +19,8 @@ DISCORD_RATE_LIMIT_STRATEGY = "exponential"
 
 # إعدادات Keep Alive
 KEEP_ALIVE_INTERVAL = 300  # 5 دقائق
-KEEP_ALIVE_URL = "https://your-app-name.onrender.com" 
+KEEP_ALIVE_URL = "https://discord-music-bot.onrender.com"
+
+# إعدادات المنفذ
+PORT = 8080
+HOST = "0.0.0.0" 

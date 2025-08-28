@@ -9,9 +9,12 @@ services:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - PYTHONUNBUFFERED=1
       - PYTHONHTTPSVERIFY=0
+      - PORT=8080
     volumes:
       - ./config.py:/app/config.py
       - ./logs:/app/logs
+    ports:
+      - "8080:8080"
     networks:
       - bot-network
     healthcheck:

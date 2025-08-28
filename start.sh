@@ -21,6 +21,7 @@ mkdir -p logs
 # تعيين متغيرات البيئة
 export PYTHONUNBUFFERED=1
 export PYTHONHTTPSVERIFY=0
+export PORT=8080
 
 # تثبيت المتطلبات
 echo "📦 تثبيت المتطلبات..."

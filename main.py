@@ -1163,6 +1163,69 @@ if __name__ == "__main__":
         print("🌐 منصة الاستضافة: Render")
         print("🔧 Keep Alive: محسن ومفعل")
         
+        # بدء Keep Alive في خيط منفصل
+        try:
+            from keep_alive import start_keep_alive
+            keep_alive_thread = start_keep_alive()
+            print("✅ Keep Alive مفعل")
+        except Exception as e:
+            print(f"⚠️ Keep Alive غير متاح: {e}")
+        
+        # بدء خادم HTTP بسيط لفتح منفذ
+        import threading
+        import socket
+        from http.server import HTTPServer, BaseHTTPRequestHandler
+        
+        class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == '/':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/html')
+                    self.end_headers()
+                    response = """
+                    <html>
+                    <head><title>Discord Music Bot</title></head>
+                    <body>
+                        <h1>🎵 Discord Music Bot is Running!</h1>
+                        <p>Status: Online</p>
+                        <p>Time: {}</p>
+                    </body>
+                    </html>
+                    """.format(time.strftime('%Y-%m-%d %H:%M:%S'))
+                    self.wfile.write(response.encode())
+                elif self.path == '/health':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    response = '{"status": "healthy", "bot": "running"}'
+                    self.wfile.write(response.encode())
+                elif self.path == '/ping':
+                    self.send_response(200)
+                    self.send_header('Content-type', 'application/json')
+                    self.end_headers()
+                    response = '{"status": "pong", "message": "Bot is alive!"}'
+                    self.wfile.write(response.encode())
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+            
+            def log_message(self, format, *args):
+                # إيقاف رسائل السجل
+                pass
+        
+        def start_http_server():
+            try:
+                port = int(os.getenv('PORT', 8080))
+                server = HTTPServer(('0.0.0.0', port), SimpleHTTPRequestHandler)
+                print(f"🌐 خادم HTTP يعمل على المنفذ {port}")
+                server.serve_forever()
+            except Exception as e:
+                print(f"❌ فشل في بدء خادم HTTP: {e}")
+        
+        # بدء خادم HTTP في خيط منفصل
+        http_thread = threading.Thread(target=start_http_server, daemon=True)
+        http_thread.start()
+        
         try:
             # تشغيل البوت مع معالجة الأخطاء
             bot.run(DISCORD_TOKEN, log_handler=None)

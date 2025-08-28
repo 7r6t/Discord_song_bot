@@ -11,6 +11,7 @@ app = Flask(__name__)
 KEEP_ALIVE_URL = os.getenv('KEEP_ALIVE_URL', 'https://discord-music-bot.onrender.com')
 PING_INTERVAL = int(os.getenv('KEEP_ALIVE_INTERVAL', 300))  # 5 دقائق افتراضياً
 RENDER_SERVICE_NAME = os.getenv('RENDER_SERVICE_NAME', 'discord-music-bot')
+PORT = int(os.getenv('PORT', 8080))
 
 # إحصائيات Keep Alive
 keep_alive_stats = {
@@ -99,7 +100,8 @@ def stats():
             "platform": os.name,
             "python_version": os.sys.version,
             "environment": os.getenv('ENVIRONMENT', 'production'),
-            "render_service": RENDER_SERVICE_NAME
+            "render_service": RENDER_SERVICE_NAME,
+            "port": PORT
         },
         "uptime_seconds": int(uptime),
         "uptime_formatted": str(timedelta(seconds=int(uptime))),
@@ -136,6 +138,7 @@ def start_keep_alive():
     print(f"   📍 URL: {KEEP_ALIVE_URL}")
     print(f"   ⏰ الفاصل: {PING_INTERVAL} ثانية")
     print(f"   🏷️ اسم الخدمة: {RENDER_SERVICE_NAME}")
+    print(f"   🌐 المنفذ: {PORT}")
     
     return keep_alive_thread
 
@@ -144,12 +147,11 @@ if __name__ == '__main__':
     keep_alive_thread = start_keep_alive()
     
     # تشغيل Flask app
-    port = int(os.getenv('PORT', 8080))
-    print(f"🌐 بدء Flask app على المنفذ {port}")
+    print(f"🌐 بدء Flask app على المنفذ {PORT}")
     
     app.run(
         host='0.0.0.0',
-        port=port,
+        port=PORT,
         debug=False,
         threaded=True
     ) 
