@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "discord-music-bot"
+version = "1.0.0"
+description = "Discord Music Bot"
+requires-python = ">=3.11"
+dependencies = [
+    "discord.py",
+    "yt-dlp",
+    "PyNaCl",
+    "python-dotenv",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["tests*"]
