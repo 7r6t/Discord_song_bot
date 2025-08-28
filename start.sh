@@ -15,10 +15,41 @@ if ! command -v ffmpeg &> /dev/null; then
     exit 1
 fi
 
+# إنشاء مجلد السجلات
+mkdir -p logs
+
+# تعيين متغيرات البيئة
+export PYTHONUNBUFFERED=1
+export PYTHONHTTPSVERIFY=0
+
 # تثبيت المتطلبات
 echo "📦 تثبيت المتطلبات..."
+pip3 install --upgrade pip
 pip3 install -r requirements.txt
 
-# تشغيل البوت
+# تشغيل البوت مع إعادة المحاولة
 echo "🚀 تشغيل البوت..."
-python3 main.py 
+max_attempts=5
+attempt=1
+
+while [ $attempt -le $max_attempts ]; do
+    echo "🔄 محاولة $attempt من $max_attempts"
+    
+    if python3 main.py; then
+        echo "✅ البوت يعمل بنجاح!"
+        break
+    else
+        echo "❌ فشل في تشغيل البوت"
+        
+        if [ $attempt -lt $max_attempts ]; then
+            delay=$((60 * attempt))  # تأخير متزايد
+            echo "⏳ انتظار $delay ثانية قبل إعادة المحاولة..."
+            sleep $delay
+        else
+            echo "💥 فشلت جميع المحاولات!"
+            exit 1
+        fi
+    fi
+    
+    attempt=$((attempt + 1))
+done 

@@ -22,6 +22,11 @@ ssl._create_default_https_context = ssl._create_unverified_context
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='', intents=intents)
 
+# إعدادات Discord.py محسنة لتجنب Rate Limiting
+bot.http.rate_limit_strategy = "exponential"  # استراتيجية تأخير متزايد
+bot.http.max_retries = 3  # عدد المحاولات الأقصى
+bot.http.retry_after = 1.0  # تأخير أساسي بين المحاولات
+
 # متغيرات عامة
 voice_clients = {}
 music_queues = {}  # قوائم التشغيل لكل سيرفر
@@ -1166,11 +1171,33 @@ if __name__ == "__main__":
             import traceback
             traceback.print_exc()
             
-            # إعادة المحاولة بعد 30 ثانية
-            print("🔄 إعادة المحاولة بعد 30 ثانية...")
-            time.sleep(30)
-            try:
-                bot.run(DISCORD_TOKEN, log_handler=None)
-            except Exception as e2:
-                print(f"❌ فشل في إعادة المحاولة: {e2}")
-                exit(1)
+            # نظام إعادة المحاولة الذكي
+            max_retries = 5
+            base_delay = 60  # بداية من دقيقة واحدة
+            
+            for attempt in range(max_retries):
+                try:
+                    print(f"🔄 محاولة {attempt + 1} من {max_retries}")
+                    bot.run(DISCORD_TOKEN, log_handler=None)
+                    break  # نجح الاتصال
+                    
+                except discord.errors.HTTPException as e2:
+                    if e2.status == 429:  # Rate Limited
+                        delay = base_delay * (2 ** attempt)  # تأخير متزايد
+                        print(f"⚠️ Rate Limited من Discord - انتظار {delay} ثانية...")
+                        print(f"💡 السبب: IP الخادم تم حظره مؤقتاً")
+                        print(f"🔧 الحل: تغيير IP أو الانتظار")
+                        time.sleep(delay)
+                    else:
+                        print(f"❌ خطأ HTTP: {e2}")
+                        break
+                        
+                except Exception as e2:
+                    print(f"❌ خطأ في إعادة المحاولة: {e2}")
+                    if attempt < max_retries - 1:
+                        delay = base_delay * (2 ** attempt)
+                        print(f"🔄 إعادة المحاولة بعد {delay} ثانية...")
+                        time.sleep(delay)
+                    else:
+                        print("❌ فشلت جميع المحاولات")
+                        exit(1)
