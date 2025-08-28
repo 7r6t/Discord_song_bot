@@ -4,6 +4,9 @@ import asyncio
 import yt_dlp
 import os
 import ssl
+import threading
+import http.server
+import socketserver
 from config import *
 
 # إصلاح مشكلة SSL
@@ -17,6 +20,32 @@ bot = commands.Bot(command_prefix=DISCORD_PREFIX, intents=intents)
 # متغيرات عامة
 voice_clients = {}
 music_queues = {}
+
+# Health Check Server
+class HealthCheckHandler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(b'OK')
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+def start_health_server():
+    """بدء خادم health check"""
+    try:
+        port = int(os.environ.get('PORT', 8080))
+        with socketserver.TCPServer(("", port), HealthCheckHandler) as httpd:
+            print(f"🌐 Health check server running on port {port}")
+            httpd.serve_forever()
+    except Exception as e:
+        print(f"❌ Failed to start health server: {e}")
+
+# بدء خادم health check في thread منفصل
+health_thread = threading.Thread(target=start_health_server, daemon=True)
+health_thread.start()
 
 # إعدادات yt-dlp محسنة
 yt_dl_opts = {
