@@ -1,26 +1,20 @@
-# ملف التكوين للبوت (اختياري)
-# يمكنك استخدام متغيرات البيئة بدلاً من هذا الملف
+import os
+from dotenv import load_dotenv
 
-# DISCORD_TOKEN = "YOUR_DISCORD_BOT_TOKEN_HERE"
-# BOT_PREFIX = ""
-# BOT_STATUS = "🎵 استمع للموسيقى"
+load_dotenv()
 
-# ملاحظة: البوت يقرأ التوكن من متغيرات البيئة DISCORD_TOKEN 
+# Discord Bot Configuration
+DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+DISCORD_PREFIX = os.getenv('DISCORD_PREFIX', 'ش')
 
-# إعدادات Rate Limiting
-RATE_LIMIT_RETRIES = 5
-RATE_LIMIT_BASE_DELAY = 60  # ثانية
-RATE_LIMIT_MAX_DELAY = 300  # 5 دقائق
+# YouTube Configuration
+YOUTUBE_COOKIES_FILE = 'youtube_cookies.txt'
 
-# إعدادات Discord.py
-DISCORD_MAX_RETRIES = 3
-DISCORD_RETRY_AFTER = 1.0
-DISCORD_RATE_LIMIT_STRATEGY = "exponential"
+# Audio Configuration
+AUDIO_QUALITY = '192k'
+MAX_DURATION = 600  # 10 minutes
+MAX_QUEUE_SIZE = 50
 
-# إعدادات Keep Alive
-KEEP_ALIVE_INTERVAL = 300  # 5 دقائق
-KEEP_ALIVE_URL = "https://fvq-songs.onrender.com"
-
-# إعدادات المنفذ
-PORT = 8080
-HOST = "0.0.0.0" 
+# Search Configuration
+SEARCH_TIMEOUT = 10
+MAX_SEARCH_RESULTS = 5 
