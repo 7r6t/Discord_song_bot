@@ -50,10 +50,9 @@ def start_health_server():
         import traceback
         traceback.print_exc()
 
-# بدء خادم health check في thread منفصل
-print("🚀 Starting Discord Bot with Health Check Server...")
-health_thread = threading.Thread(target=start_health_server, daemon=True)
-health_thread.start()
+# متغير للتحكم في الخادم
+health_server_started = False
+health_thread = None
 
 # إعدادات yt-dlp محسنة
 yt_dl_opts = {
