@@ -25,7 +25,7 @@ health_server_started = False
 # Health Check Server
 class HealthCheckHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/health':
+        if self.path == '/' or self.path == '/health':
             self.send_response(200)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
