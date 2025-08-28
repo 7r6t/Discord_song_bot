@@ -1,11 +1,11 @@
 [phases.setup]
-nixPkgs = ["python311", "ffmpeg"]
+nixPkgs = ["python311", "ffmpeg", "python311Packages.pip"]
 
 [phases.install]
-cmds = ["python -m venv venv", "venv/bin/pip install -r requirements.txt"]
+cmds = ["chmod +x start.sh"]
 
 [phases.build]
 cmds = ["echo 'Build completed successfully!'"]
 
 [start]
-cmd = "venv/bin/python main.py"
+cmd = "./start.sh"
