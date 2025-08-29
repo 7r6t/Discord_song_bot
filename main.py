@@ -33,14 +33,15 @@ voice_clients = {}
 music_queues = {}
 loop_states = {} # إضافة متغير لتتبع حالة تكرار الأغنية
 
-# إعدادات yt-dlp النووية المطلقة
+# إعدادات yt-dlp مع إصلاح SSL
 yt_dl_opts = {
     'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
     'nocheckcertificate': True,
-    'ignoreerrors': False,
+    'no_check_certificate': True,
+    'ignoreerrors': True,
     'logtostderr': False,
     'quiet': True,
     'no_warnings': True,
@@ -67,13 +68,13 @@ yt_dl_opts = {
         'Sec-Fetch-Site': 'none',
         'Cache-Control': 'max-age=0'
     },
-    'extractor_retries': 100,
-    'fragment_retries': 100,
-    'retries': 100,
+    'extractor_retries': 10,
+    'fragment_retries': 10,
+    'retries': 10,
     'sleep_interval': 0,
     'max_sleep_interval': 0,
     'sleep_interval_requests': 0,
-    'socket_timeout': 2000,
+    'socket_timeout': 60,
     'extractor_args': {
         'youtube': {
             'skip': ['dash', 'live'],
@@ -88,18 +89,6 @@ yt_dl_opts = {
     'extract_flat': False,
     'writeinfojson': False,
     'writethumbnail': False,
-    'writesubtitles': False,
-    'writeautomaticsub': False,
-    'writedescription': False,
-    'writeannotations': False,
-    'writecomments': False,
-    'getcomments': False,
-    'writeduration': False,
-    'writeid': False,
-    'writetimestamp': False,
-    'writelocation': False,
-    'writetags': False,
-    'writeplaylistmetafiles': False,
     'writesubtitles': False,
     'writeautomaticsub': False,
     'writedescription': False,
@@ -348,10 +337,10 @@ async def add_to_queue(ctx, query, voice_channel, guild_id):
         await ctx.send(f"❌ خطأ في إضافة الأغنية: {str(e)}")
 
 async def search_song(query):
-    """البحث النووي المطلق - يستخدم 25 محاولة مختلفة!"""
-    print(f"☢️ بدء البحث النووي المطلق عن: {query}")
+    """البحث مع إصلاح SSL - يستخدم 10 محاولات مختلفة!"""
+    print(f"🔧 بدء البحث مع إصلاح SSL عن: {query}")
     
-    # قائمة user agents متنوعة جداً
+    # قائمة user agents متنوعة
     user_agents = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -361,38 +350,27 @@ async def search_song(query):
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
         'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
-        'Mozilla/5.0 (iPad; CPU OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
         'Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
-        'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)',
-        'Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)',
-        'Mozilla/5.0 (compatible; DuckDuckBot/1.0; +http://duckduckgo.com/duckduckbot.html)',
-        'Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)',
-        'Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)',
-        'Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/)',
-        'Mozilla/5.0 (compatible; MJ12bot/v1.4.8; http://mj12bot.com/)',
-        'Mozilla/5.0 (compatible; SemrushBot/7~bl; +http://www.semrush.com/bot.html)',
-        'Mozilla/5.0 (compatible; DotBot/1.1; http://www.opensiteexplorer.org/dotbot; help@moz.com)'
+        'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
     ]
     
     # قائمة browsers للcookies
-    browsers = ['chrome', 'firefox', 'safari', 'edge', 'opera', 'brave', 'chromium']
+    browsers = ['chrome', 'firefox', 'safari', 'edge', 'opera']
     
     # محاولة البحث مع كل إعداد
-    for attempt in range(25):
+    for attempt in range(10):
         try:
-            print(f"🔄 المحاولة {attempt + 1}/25")
+            print(f"🔄 المحاولة {attempt + 1}/10")
             
             # إنشاء إعدادات مختلفة لكل محاولة
             current_opts = yt_dl_opts.copy()
             current_opts['user_agent'] = user_agents[attempt % len(user_agents)]
             current_opts['http_headers'] = current_opts['http_headers'].copy()
             current_opts['http_headers']['User-Agent'] = current_opts['user_agent']
+            
+            # إصلاح SSL لكل محاولة
+            current_opts['nocheckcertificate'] = True
+            current_opts['no_check_certificate'] = True
             
             # تغيير browser للcookies
             if attempt < len(browsers):
@@ -401,7 +379,7 @@ async def search_song(query):
                 current_opts['cookiesfrombrowser'] = (browsers[attempt % len(browsers)],)
             
             # إعدادات خاصة لمحاولات مختلفة
-            if attempt >= 10:
+            if attempt >= 5:
                 current_opts['extractor_args'] = {
                     'youtube': {
                         'skip': ['dash', 'live'],
@@ -409,23 +387,14 @@ async def search_song(query):
                         'player_skip': ['webpage'],
                     }
                 }
+                current_opts['cookiefile'] = None  # إزالة ملف cookies
             
-            if attempt >= 15:
+            if attempt >= 8:
                 current_opts['extractor_args'] = {
                     'youtube': {
                         'skip': ['dash', 'live', 'hls'],
                         'player_client': ['web'],
                         'player_skip': ['configs'],
-                    }
-                }
-                current_opts['cookiefile'] = None  # إزالة ملف cookies
-            
-            if attempt >= 20:
-                current_opts['extractor_args'] = {
-                    'youtube': {
-                        'skip': ['dash', 'live', 'hls', 'webm'],
-                        'player_client': ['tv'],
-                        'player_skip': ['webpage', 'configs'],
                     }
                 }
                 current_opts['cookiefile'] = None
@@ -460,11 +429,11 @@ async def search_song(query):
             
         except Exception as e:
             print(f"❌ فشلت المحاولة {attempt + 1}: {str(e)[:100]}...")
-            if attempt < 24:  # ليس المحاولة الأخيرة
-                await asyncio.sleep(0.3)  # انتظار قصير بين المحاولات
+            if attempt < 9:  # ليس المحاولة الأخيرة
+                await asyncio.sleep(0.5)  # انتظار قصير بين المحاولات
             continue
     
-    print("❌ فشلت جميع المحاولات الـ25!")
+    print("❌ فشلت جميع المحاولات الـ10!")
     return None
 
 def format_duration(duration):
