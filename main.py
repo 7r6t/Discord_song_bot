@@ -18,6 +18,10 @@ os.environ['SSL_VERIFY_PEER'] = '0'
 os.environ['SSL_VERIFY_HOSTNAME'] = '0'
 os.environ['OPENSSL_CONF'] = ''
 os.environ['OPENSSL_ENGINES'] = ''
+os.environ['SSL_CERT_VERIFY'] = '0'
+os.environ['SSL_VERIFY'] = '0'
+os.environ['SSL_VERIFY_PEER'] = '0'
+os.environ['SSL_VERIFY_HOSTNAME'] = '0'
 
 # تعطيل SSL نهائياً
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -27,10 +31,6 @@ ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.set_ciphers('DEFAULT@SECLEVEL=0')
-ssl_context.options |= ssl.OP_NO_SSLv2
-ssl_context.options |= ssl.OP_NO_SSLv3
-ssl_context.options |= ssl.OP_NO_TLSv1
-ssl_context.options |= ssl.OP_NO_TLSv1_1
 ssl._create_default_https_context = lambda: ssl_context
 
 # تعطيل SSL نهائياً مرة أخرى
@@ -381,6 +381,11 @@ async def add_to_queue(ctx, query, voice_channel, guild_id):
         # البحث عن الأغنية
         song_info = await search_song(query)
         if not song_info:
+            # محاولة ثانية باستخدام requests
+            print("🔄 محاولة ثانية باستخدام requests...")
+            song_info = await search_song_requests(query)
+            
+        if not song_info:
             await ctx.send("❌ لم يتم العثور على الأغنية!")
             return
         
@@ -478,6 +483,61 @@ async def search_song(query):
         
     except Exception as e:
         print(f"❌ خطأ في البحث: {str(e)[:100]}...")
+        return None
+
+async def search_song_requests(query):
+    """البحث باستخدام requests بدلاً من yt-dlp لتجنب مشاكل SSL"""
+    print(f"🔧 بدء البحث باستخدام requests عن: {query}")
+    
+    try:
+        import requests
+        from urllib.parse import quote
+        
+        # إعدادات requests بدون SSL
+        session = requests.Session()
+        session.verify = False
+        session.trust_env = False
+        
+        # تعطيل تحذيرات SSL
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
+        if query.startswith(('http://', 'https://')):
+            # رابط مباشر
+            response = session.get(query, timeout=10)
+            if response.status_code == 200:
+                return {
+                    'title': 'رابط مباشر',
+                    'url': query,
+                    'duration': 'غير معروف',
+                    'extractor': 'direct'
+                }
+        else:
+            # البحث بالكلمات
+            search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
+            response = session.get(search_url, timeout=10)
+            
+            if response.status_code == 200:
+                # استخراج أول نتيجة من HTML
+                import re
+                video_pattern = r'watch\?v=([a-zA-Z0-9_-]{11})'
+                matches = re.findall(video_pattern, response.text)
+                
+                if matches:
+                    video_id = matches[0]
+                    video_url = f"https://www.youtube.com/watch?v={video_id}"
+                    return {
+                        'title': f'نتيجة بحث: {query}',
+                        'url': video_url,
+                        'duration': 'غير معروف',
+                        'extractor': 'youtube_search'
+                    }
+        
+        print("❌ فشل البحث باستخدام requests")
+        return None
+        
+    except Exception as e:
+        print(f"❌ خطأ في البحث باستخدام requests: {str(e)[:100]}...")
         return None
 
 def format_duration(duration):
@@ -1889,6 +1949,22 @@ async def youtube_nuclear_absolute(ctx, *, query="test song"):
         await ctx.send("⏰ **انتهت مهلة الاختبار - الاختبار استغرق وقتاً طويلاً**")
     except Exception as e:
         await ctx.send(f"❌ **خطأ في الاختبار النووي:** {str(e)[:100]}")
+
+@bot.command(name="test_requests")
+async def test_requests_command(ctx, *, query):
+    """اختبار البحث باستخدام requests"""
+    try:
+        await ctx.send(f"🔧 اختبار البحث باستخدام requests عن: {query}")
+        
+        # البحث باستخدام requests
+        song_info = await search_song_requests(query)
+        if song_info:
+            await ctx.send(f"✅ نجح البحث! العنوان: {song_info['title']}")
+        else:
+            await ctx.send("❌ فشل البحث!")
+            
+    except Exception as e:
+        await ctx.send(f"❌ خطأ: {str(e)}")
 
 @bot.command(name="youtube_nuclear_final")
 async def youtube_nuclear_final(ctx, *, query="test song"):
