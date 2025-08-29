@@ -15,7 +15,14 @@ intents = discord.Intents.all()
 intents.message_content = True  # إضافة intent للرسائل
 intents.guilds = True  # إضافة intent للخوادم
 intents.voice_states = True  # إضافة intent للحالات الصوتية
-bot = commands.Bot(command_prefix=DISCORD_PREFIX, intents=intents)
+
+# إعدادات محسنة لحل مشكلة heartbeat
+bot = commands.Bot(
+    command_prefix=DISCORD_PREFIX, 
+    intents=intents,
+    help_command=None,  # تعطيل help command المدمج
+    max_messages=10000  # زيادة حد الرسائل
+)
 
 # متغيرات عامة
 voice_clients = {}
