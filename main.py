@@ -16,6 +16,8 @@ os.environ['SSL_CERT_VERIFY'] = '0'
 os.environ['SSL_VERIFY'] = '0'
 os.environ['SSL_VERIFY_PEER'] = '0'
 os.environ['SSL_VERIFY_HOSTNAME'] = '0'
+os.environ['OPENSSL_CONF'] = ''
+os.environ['OPENSSL_ENGINES'] = ''
 
 # تعطيل SSL نهائياً
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -25,7 +27,14 @@ ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 ssl_context.set_ciphers('DEFAULT@SECLEVEL=0')
+ssl_context.options |= ssl.OP_NO_SSLv2
+ssl_context.options |= ssl.OP_NO_SSLv3
+ssl_context.options |= ssl.OP_NO_TLSv1
+ssl_context.options |= ssl.OP_NO_TLSv1_1
 ssl._create_default_https_context = lambda: ssl_context
+
+# تعطيل SSL نهائياً مرة أخرى
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # إعداد البوت
 intents = discord.Intents.all()
@@ -122,6 +131,24 @@ yt_dl_opts = {
     'no_check_certificate': True,
     'nocheckcertificate': True,
     'cafile': None,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
     'nocheckcertificate': True,
     'no_check_certificate': True,
     'prefer_insecure': True,
@@ -395,6 +422,16 @@ async def search_song(query):
         current_opts['cafile'] = None
         
         # إضافة إعدادات SSL متقدمة
+        current_opts['nocheckcertificate'] = True
+        current_opts['no_check_certificate'] = True
+        current_opts['prefer_insecure'] = True
+        
+        # إضافة إعدادات SSL إضافية
+        current_opts['nocheckcertificate'] = True
+        current_opts['no_check_certificate'] = True
+        current_opts['prefer_insecure'] = True
+        
+        # إضافة إعدادات SSL نهائية
         current_opts['nocheckcertificate'] = True
         current_opts['no_check_certificate'] = True
         current_opts['prefer_insecure'] = True
