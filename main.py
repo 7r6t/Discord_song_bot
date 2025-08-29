@@ -1377,17 +1377,18 @@ async def ping_simple_command(ctx):
 
 
 
-@bot.command(name="hello")
-async def hello_command(ctx):
-    """أمر ترحيب بسيط"""
-    await ctx.send("🎵 أهلاً وسهلاً! البوت يعمل بشكل طبيعي!")
-    print(f"🎵 تم تنفيذ أمر ترحيب من {ctx.author} في {ctx.guild.name}")
+# أوامر hello و hi محذوفة لتجنب التكرار
+# @bot.command(name="hello")
+# async def hello_command(ctx):
+#     """أمر ترحيب بسيط"""
+#     await ctx.send("🎵 أهلاً وسهلاً! البوت يعمل بشكل طبيعي!")
+#     print(f"🎵 تم تنفيذ أمر ترحيب من {ctx.author} في {ctx.guild.name}")
 
-@bot.command(name="hi")
-async def hi_command(ctx):
-    """أمر ترحيب بسيط (اختصار)"""
-    await ctx.send("🎵 أهلاً وسهلاً! البوت يعمل بشكل طبيعي!")
-    print(f"🎵 تم تنفيذ أمر hi من {ctx.author} في {ctx.guild.name}")
+# @bot.command(name="hi")
+# async def hi_command(ctx):
+#     """أمر ترحيب بسيط (اختصار)"""
+#     await ctx.send("🎵 أهلاً وسهلاً! البوت يعمل بشكل طبيعي!")
+#     print(f"🎵 تم تنفيذ أمر hi من {ctx.author} في {ctx.guild.name}")
 
 # أمر مرحبا محذوف لتجنب التكرار
 # @bot.command(name="مرحبا")
