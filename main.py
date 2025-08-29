@@ -68,13 +68,13 @@ yt_dl_opts = {
         'Sec-Fetch-Site': 'none',
         'Cache-Control': 'max-age=0'
     },
-    'extractor_retries': 5,
-    'fragment_retries': 5,
-    'retries': 5,
+    'extractor_retries': 3,
+    'fragment_retries': 3,
+    'retries': 3,
     'sleep_interval': 0,
     'max_sleep_interval': 0,
     'sleep_interval_requests': 0,
-    'socket_timeout': 30,
+    'socket_timeout': 20,
     'extractor_args': {
         'youtube': {
             'skip': ['dash', 'live'],
@@ -104,7 +104,10 @@ yt_dl_opts = {
     'prefer_insecure': True,
     'no_check_certificate': True,
     'nocheckcertificate': True,
-    'cafile': '/etc/ssl/certs/ca-certificates.crt'
+    'cafile': '/etc/ssl/certs/ca-certificates.crt',
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True
 }
 
 @bot.command(name="تشغيل")
@@ -341,23 +344,22 @@ async def add_to_queue(ctx, query, voice_channel, guild_id):
         await ctx.send(f"❌ خطأ في إضافة الأغنية: {str(e)}")
 
 async def search_song(query):
-    """البحث مع إصلاح SSL نهائي - يستخدم 3 محاولات مختلفة!"""
+    """البحث مع إصلاح SSL نهائي - يستخدم 2 محاولات مختلفة!"""
     print(f"🔧 بدء البحث مع إصلاح SSL نهائي عن: {query}")
     
     # قائمة user agents متنوعة
     user_agents = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
     ]
     
     # قائمة browsers للcookies
-    browsers = ['chrome', 'firefox']
+    browsers = ['chrome']
     
     # محاولة البحث مع كل إعداد
-    for attempt in range(3):
+    for attempt in range(2):
         try:
-            print(f"🔄 المحاولة {attempt + 1}/3")
+            print(f"🔄 المحاولة {attempt + 1}/2")
             
             # إنشاء إعدادات مختلفة لكل محاولة
             current_opts = yt_dl_opts.copy()
@@ -377,8 +379,8 @@ async def search_song(query):
             else:
                 current_opts['cookiesfrombrowser'] = (browsers[attempt % len(browsers)],)
             
-            # إعدادات خاصة لمحاولات مختلفة
-            if attempt >= 2:
+            # إعدادات خاصة للمحاولة الثانية
+            if attempt >= 1:
                 current_opts['extractor_args'] = {
                     'youtube': {
                         'skip': ['dash', 'live'],
@@ -417,11 +419,11 @@ async def search_song(query):
             
         except Exception as e:
             print(f"❌ فشلت المحاولة {attempt + 1}: {str(e)[:100]}...")
-            if attempt < 2:  # ليس المحاولة الأخيرة
-                await asyncio.sleep(2)  # انتظار أطول بين المحاولات
+            if attempt < 1:  # ليس المحاولة الأخيرة
+                await asyncio.sleep(3)  # انتظار أطول بين المحاولات
             continue
     
-    print("❌ فشلت جميع المحاولات الـ3!")
+    print("❌ فشلت جميع المحاولات الـ2!")
     return None
 
 def format_duration(duration):
