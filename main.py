@@ -506,7 +506,7 @@ async def help_english(ctx):
     """عرض أوامر البوت (بالإنجليزية)"""
     await help_commands(ctx)
 
-@bot.command(name="help")
+@bot.command(name="help_cmd_short")
 async def help_english_short(ctx):
     """عرض أوامر البوت (بالإنجليزية) - اختصار"""
     await help_commands(ctx)
