@@ -42,7 +42,7 @@ intents.message_content = True  # إضافة intent للرسائل
 intents.guilds = True  # إضافة intent للخوادم
 intents.voice_states = True  # إضافة intent للحالات الصوتية
 
-# إعدادات محسنة لحل مشكلة heartbeat
+# إعدادات محسنة لحل مشكلة heartbeat والصوت
 bot = commands.Bot(
     command_prefix=DISCORD_PREFIX, 
     intents=intents,
@@ -51,7 +51,10 @@ bot = commands.Bot(
     chunk_guilds_at_startup=False,  # تعطيل chunk guilds
     enable_debug_events=False,  # تعطيل debug events
     status=discord.Status.online,  # تعيين الحالة
-    activity=discord.Game(name="🎵 استمع للموسيقى")  # تعيين النشاط
+    activity=discord.Game(name="🎵 استمع للموسيقى"),  # تعيين النشاط
+    command_timeout=60,  # timeout للأوامر
+    max_concurrency=10,  # أقصى عدد أوامر متزامنة
+    case_insensitive=True  # تجاهل حالة الأحرف
 )
 
 # متغيرات عامة
@@ -549,16 +552,42 @@ def format_duration(duration):
     seconds = int(duration % 60)
     return f"{minutes}:{seconds:02d}"
 
+async def reconnect_voice(guild_id, voice_channel):
+    """إعادة الاتصال بالقناة الصوتية مع إصلاح خطأ 4006"""
+    try:
+        # فصل الاتصال القديم إذا كان موجوداً
+        if guild_id in voice_clients and voice_clients[guild_id].is_connected():
+            try:
+                await voice_clients[guild_id].disconnect()
+                print(f"✅ تم فصل الاتصال القديم: {voice_channel.name}")
+            except:
+                pass
+        
+        # انتظار قليلاً
+        await asyncio.sleep(3)
+        
+        # محاولة الاتصال الجديد
+        voice_client = await voice_channel.connect(timeout=30.0, self_deaf=True, self_mute=False)
+        voice_clients[guild_id] = voice_client
+        print(f"✅ تم إعادة الاتصال بنجاح: {voice_channel.name}")
+        return voice_client
+        
+    except Exception as e:
+        print(f"❌ فشل إعادة الاتصال: {e}")
+        return None
+
 async def play_next(ctx, guild_id, voice_channel):
     """تشغيل الأغنية التالية"""
     if not music_queues[guild_id]:
         return
     
     try:
-        # الاتصال بالقناة الصوتية
+        # الاتصال بالقناة الصوتية مع إصلاح خطأ 4006
         if guild_id not in voice_clients or not voice_clients[guild_id].is_connected():
-            voice_client = await voice_channel.connect()
-            voice_clients[guild_id] = voice_client
+            voice_client = await reconnect_voice(guild_id, voice_channel)
+            if not voice_client:
+                await ctx.send("❌ فشل الاتصال بالقناة الصوتية!")
+                return
         else:
             voice_client = voice_clients[guild_id]
         
@@ -1965,6 +1994,29 @@ async def test_requests_command(ctx, *, query):
             
     except Exception as e:
         await ctx.send(f"❌ خطأ: {str(e)}")
+
+@bot.command(name="fix_voice")
+async def fix_voice_command(ctx):
+    """إصلاح مشاكل الصوت"""
+    try:
+        if not ctx.author.voice:
+            await ctx.send("❌ يجب أن تكون في قناة صوتية!")
+            return
+        
+        voice_channel = ctx.author.voice.channel
+        guild_id = ctx.guild.id
+        
+        await ctx.send("🔧 جاري إصلاح مشاكل الصوت...")
+        
+        # إعادة الاتصال
+        voice_client = await reconnect_voice(guild_id, voice_channel)
+        if voice_client:
+            await ctx.send("✅ تم إصلاح الصوت بنجاح!")
+        else:
+            await ctx.send("❌ فشل إصلاح الصوت!")
+            
+    except Exception as e:
+        await ctx.send(f"❌ خطأ في إصلاح الصوت: {str(e)}")
 
 @bot.command(name="youtube_nuclear_final")
 async def youtube_nuclear_final(ctx, *, query="test song"):
