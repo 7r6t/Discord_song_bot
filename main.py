@@ -109,10 +109,28 @@ async def play_english(ctx, *, query):
     """تشغيل أغنية من YouTube أو SoundCloud (بالإنجليزية)"""
     await play(ctx, query=query)
 
-@bot.command(name="س")
+@bot.command(name="قصير")
 async def play_short(ctx, *, query):
     """تشغيل أغنية قصيرة (اختصار لـ ش)"""
     await play(ctx, query=query)
+
+@bot.command(name="س")
+async def skip_song(ctx):
+    """تخطي الأغنية الحالية"""
+    guild_id = ctx.guild.id
+    
+    if guild_id not in voice_clients or not voice_clients[guild_id].is_playing():
+        await ctx.send("❌ لا توجد أغنية تعمل حالياً!")
+        return
+    
+    # إيقاف الأغنية الحالية (ستنتقل للأغنية التالية تلقائياً)
+    voice_clients[guild_id].stop()
+    await ctx.send("⏭️ تم تخطي الأغنية!")
+
+@bot.command(name="skip")
+async def skip_english(ctx):
+    """تخطي الأغنية الحالية (بالإنجليزية)"""
+    await skip_song(ctx)
 
 @bot.command(name="قف")
 async def pause(ctx):
@@ -133,6 +151,11 @@ async def pause(ctx):
 @bot.command(name="pause")
 async def pause_english(ctx):
     """إيقاف مؤقت للأغنية (بالإنجليزية)"""
+    await pause(ctx)
+
+@bot.command(name="شوي")
+async def pause_short(ctx):
+    """إيقاف مؤقت للأغنية (اختصار)"""
     await pause(ctx)
 
 @bot.command(name="كمل")
@@ -156,6 +179,11 @@ async def resume_english(ctx):
     """استئناف الأغنية المتوقفة مؤقتاً (بالإنجليزية)"""
     await resume(ctx)
 
+@bot.command(name="استمر")
+async def resume_arabic(ctx):
+    """استئناف الأغنية المتوقفة مؤقتاً (بالعربية)"""
+    await resume(ctx)
+
 @bot.command(name="كرر")
 async def loop_song(ctx):
     """تفعيل تكرار الأغنية الحالية"""
@@ -176,6 +204,11 @@ async def loop_english(ctx):
     """تفعيل تكرار الأغنية الحالية (بالإنجليزية)"""
     await loop_song(ctx)
 
+@bot.command(name="تكرار")
+async def loop_arabic(ctx):
+    """تفعيل تكرار الأغنية الحالية (بالعربية)"""
+    await loop_song(ctx)
+
 @bot.command(name="ا")
 async def stop_loop(ctx):
     """إيقاف تكرار الأغنية"""
@@ -193,6 +226,11 @@ async def unloop_english(ctx):
     """إيقاف تكرار الأغنية (بالإنجليزية)"""
     await stop_loop(ctx)
 
+@bot.command(name="الغاء")
+async def unloop_arabic(ctx):
+    """إيقاف تكرار الأغنية (بالعربية)"""
+    await stop_loop(ctx)
+
 @bot.command(name="تست")
 async def test(ctx):
     """اختبار البوت"""
@@ -203,9 +241,24 @@ async def test_english(ctx):
     """اختبار البوت (بالإنجليزية)"""
     await test(ctx)
 
+@bot.command(name="اختبار")
+async def test_arabic(ctx):
+    """اختبار البوت (بالعربية)"""
+    await test(ctx)
+
 @bot.command(name="شوي")
-async def volume(ctx, level: int = None):
-    """تغيير مستوى الصوت (0-100)"""
+async def pause_short(ctx):
+    """إيقاف مؤقت للأغنية (اختصار)"""
+    await pause(ctx)
+
+@bot.command(name="volume")
+async def volume_english(ctx, level: int = None):
+    """تغيير مستوى الصوت (0-100) (بالإنجليزية)"""
+    await volume_arabic(ctx, level=level)
+
+@bot.command(name="صوت")
+async def volume_arabic(ctx, level: int = None):
+    """تغيير مستوى الصوت (0-100) (بالعربية)"""
     guild_id = ctx.guild.id
     
     if guild_id not in voice_clients:
@@ -227,11 +280,6 @@ async def volume(ctx, level: int = None):
     volume_level = level / 100.0
     voice_clients[guild_id].volume = volume_level
     await ctx.send(f"🔊 تم تغيير مستوى الصوت إلى: {level}%")
-
-@bot.command(name="volume")
-async def volume_english(ctx, level: int = None):
-    """تغيير مستوى الصوت (0-100) (بالإنجليزية)"""
-    await volume(ctx, level=level)
 
 async def add_to_queue(ctx, query, voice_channel, guild_id):
     """إضافة أغنية لقائمة التشغيل"""
@@ -433,6 +481,11 @@ async def stop_english(ctx):
     """إيقاف الموسيقى والخروج من القناة (بالإنجليزية)"""
     await stop(ctx)
 
+@bot.command(name="قف")
+async def stop_arabic(ctx):
+    """إيقاف الموسيقى والخروج من القناة (بالعربية)"""
+    await stop(ctx)
+
 @bot.command(name="أوامر")
 async def help_commands(ctx):
     """عرض أوامر البوت"""
@@ -464,6 +517,11 @@ async def help_english(ctx):
     """عرض أوامر البوت (بالإنجليزية)"""
     await help_commands(ctx)
 
+@bot.command(name="help")
+async def help_english_short(ctx):
+    """عرض أوامر البوت (بالإنجليزية) - اختصار"""
+    await help_commands(ctx)
+
 @bot.command(name="ping")
 async def ping(ctx):
     """اختبار سرعة استجابة البوت"""
@@ -487,6 +545,11 @@ async def clear_queue(ctx):
     music_queues[guild_id].clear()
     await ctx.send("🗑️ تم مسح قائمة التشغيل!")
 
+@bot.command(name="مسح")
+async def clear_arabic(ctx):
+    """مسح قائمة التشغيل (بالعربية)"""
+    await clear_queue(ctx)
+
 @bot.command(name="now")
 async def now_playing(ctx):
     """عرض الأغنية الحالية"""
@@ -509,6 +572,11 @@ async def now_playing(ctx):
         await ctx.send(embed=embed)
     else:
         await ctx.send("❌ لا يمكن تحديد الأغنية الحالية!")
+
+@bot.command(name="الآن")
+async def now_arabic(ctx):
+    """عرض الأغنية الحالية (بالعربية)"""
+    await now_playing(ctx)
 
 @bot.command(name="shuffle")
 async def shuffle_queue(ctx):
