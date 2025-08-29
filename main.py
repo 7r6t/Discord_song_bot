@@ -22,7 +22,7 @@ voice_clients = {}
 music_queues = {}
 loop_states = {} # إضافة متغير لتتبع حالة تكرار الأغنية
 
-# إعدادات yt-dlp محسنة
+# إعدادات yt-dlp محسنة لحل مشكلة YouTube
 yt_dl_opts = {
     'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio/best',
     'extractaudio': True,
@@ -37,35 +37,38 @@ yt_dl_opts = {
     'source_address': '0.0.0.0',
     'no_check_certificate': True,
     'prefer_insecure': True,
-    'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'extractor_args': {
         'youtube': {
             'skip': ['dash', 'live', 'hls'],
-            'player_client': ['android', 'web', 'tv', 'ios']
+            'player_client': ['android', 'web', 'tv', 'ios'],
+            'player_skip': ['webpage', 'configs'],
+            'player_params': {'hl': 'en', 'gl': 'US'}
         }
     },
     'geo_bypass': True,
     'geo_bypass_country': 'US',
     'geo_bypass_ip_block': '1.1.1.1/24',
     'http_headers': {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-us,en;q=0.5',
-        'Sec-Fetch-Mode': 'navigate',
-        'Dnt': '1',
-        'Upgrade-Insecure-Requests': '1',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
         'Connection': 'keep-alive',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Cache-Control': 'max-age=0'
     },
-    'extractor_retries': 3,
-    'fragment_retries': 3,
-    'retries': 3,
-    'sleep_interval': 1,
-    'max_sleep_interval': 3,
-    'sleep_interval_requests': 1,
-    'socket_timeout': 30,
+    'extractor_retries': 5,
+    'fragment_retries': 5,
+    'retries': 5,
+    'sleep_interval': 2,
+    'max_sleep_interval': 5,
+    'sleep_interval_requests': 2,
+    'socket_timeout': 60,
     'max_downloads': 1,
     'prefer_ffmpeg': True,
     'postprocessors': [{
@@ -78,7 +81,9 @@ yt_dl_opts = {
     'skip_download': False,
     'http_chunk_size': 10485760,
     'extract_flat': False,
-    'verbose': False
+    'verbose': False,
+    'cookiesfrombrowser': ('chrome',),
+    'cookiefile': 'cookies.txt'
 }
 
 @bot.event
@@ -90,7 +95,7 @@ async def on_ready():
     print(f"✅ {bot.user} تم تشغيله بنجاح!")
     await bot.change_presence(activity=discord.Game(name="�� استمع للموسيقى"))
 
-@bot.command(name="ش")
+@bot.command(name="تشغيل")
 async def play(ctx, *, query):
     """تشغيل أغنية من YouTube أو SoundCloud"""
     if not ctx.author.voice:
@@ -110,6 +115,11 @@ async def play(ctx, *, query):
 @bot.command(name="play")
 async def play_english(ctx, *, query):
     """تشغيل أغنية من YouTube أو SoundCloud (بالإنجليزية)"""
+    await play(ctx, query=query)
+
+@bot.command(name="ش")
+async def play_short(ctx, *, query):
+    """تشغيل أغنية (اختصار)"""
     await play(ctx, query=query)
 
 @bot.command(name="قصير")
@@ -156,8 +166,13 @@ async def pause_english(ctx):
     """إيقاف مؤقت للأغنية (بالإنجليزية)"""
     await pause(ctx)
 
-@bot.command(name="شوي")
+@bot.command(name="إيقاف_مؤقت")
 async def pause_short(ctx):
+    """إيقاف مؤقت للأغنية"""
+    await pause(ctx)
+
+@bot.command(name="شوي")
+async def pause_arabic_short(ctx):
     """إيقاف مؤقت للأغنية (اختصار)"""
     await pause(ctx)
 
@@ -254,7 +269,7 @@ async def volume_english(ctx, level: int = None):
     """تغيير مستوى الصوت (0-100) (بالإنجليزية)"""
     await volume_arabic(ctx, level=level)
 
-@bot.command(name="صوت")
+@bot.command(name="مستوى_صوت")
 async def volume_arabic(ctx, level: int = None):
     """تغيير مستوى الصوت (0-100) (بالعربية)"""
     guild_id = ctx.guild.id
@@ -278,6 +293,11 @@ async def volume_arabic(ctx, level: int = None):
     volume_level = level / 100.0
     voice_clients[guild_id].volume = volume_level
     await ctx.send(f"🔊 تم تغيير مستوى الصوت إلى: {level}%")
+
+@bot.command(name="صوت")
+async def volume_arabic_short(ctx, level: int = None):
+    """تغيير مستوى الصوت (0-100) (اختصار)"""
+    await volume_arabic(ctx, level)
 
 async def add_to_queue(ctx, query, voice_channel, guild_id):
     """إضافة أغنية لقائمة التشغيل"""
@@ -315,6 +335,9 @@ async def search_song(query):
         if query.startswith(('http://', 'https://')):
             with yt_dlp.YoutubeDL(yt_dl_opts) as ydl:
                 info = ydl.extract_info(query, download=False)
+                if not info:
+                    print(f"❌ فشل في استخراج معلومات من الرابط: {query}")
+                    return None
                 return {
                     'title': info.get('title', 'غير معروف'),
                     'url': info.get('url', query),
@@ -326,19 +349,50 @@ async def search_song(query):
             search_query = f"ytsearch1:{query}"
             with yt_dlp.YoutubeDL(yt_dl_opts) as ydl:
                 info = ydl.extract_info(search_query, download=False)
-                if info and 'entries' in info and info['entries']:
-                    entry = info['entries'][0]
-                    return {
-                        'title': entry.get('title', 'غير معروف'),
-                        'url': entry.get('url', ''),
-                        'duration': format_duration(entry.get('duration', 0)),
-                        'extractor': entry.get('extractor', 'unknown')
-                    }
+                if not info:
+                    print(f"❌ فشل في البحث عن: {query}")
+                    return None
+                if 'entries' not in info or not info['entries']:
+                    print(f"❌ لم يتم العثور على نتائج لـ: {query}")
+                    return None
+                entry = info['entries'][0]
+                if not entry:
+                    print(f"❌ فشل في استخراج معلومات النتيجة الأولى لـ: {query}")
+                    return None
+                return {
+                    'title': entry.get('title', 'غير معروف'),
+                    'url': entry.get('url', ''),
+                    'duration': format_duration(entry.get('duration', 0)),
+                    'extractor': entry.get('extractor', 'unknown')
+                }
         
         return None
         
     except Exception as e:
-        print(f"خطأ في البحث: {e}")
+        print(f"❌ خطأ في البحث: {e}")
+        if "Sign in to confirm you're not a bot" in str(e):
+            print("🔒 YouTube يطلب تسجيل الدخول - محاولة حل المشكلة...")
+            # محاولة إعادة البحث مع إعدادات مختلفة
+            try:
+                fallback_opts = yt_dl_opts.copy()
+                fallback_opts['user_agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                fallback_opts['http_headers']['User-Agent'] = fallback_opts['user_agent']
+                
+                if not query.startswith(('http://', 'https://')):
+                    search_query = f"ytsearch1:{query}"
+                    with yt_dlp.YoutubeDL(fallback_opts) as ydl:
+                        info = ydl.extract_info(search_query, download=False)
+                        if info and 'entries' in info and info['entries']:
+                            entry = info['entries'][0]
+                            return {
+                                'title': entry.get('title', 'غير معروف'),
+                                'url': entry.get('url', ''),
+                                'duration': format_duration(entry.get('duration', 0)),
+                                'extractor': entry.get('extractor', 'unknown')
+                            }
+            except Exception as fallback_e:
+                print(f"❌ فشلت المحاولة الثانية: {fallback_e}")
+        
         return None
 
 def format_duration(duration):
@@ -484,23 +538,23 @@ async def help_commands(ctx):
     embed = discord.Embed(title="🎵 أوامر البوت", color=0x0099ff)
     
     commands_list = [
-        ("ش [اسم الأغنية]", "تشغيل أغنية من YouTube أو SoundCloud"),
-        ("س [اسم الأغنية]", "اختصار لـ ش"),
+        ("تشغيل [اسم الأغنية]", "تشغيل أغنية من YouTube أو SoundCloud"),
+        ("ش [اسم الأغنية]", "اختصار لـ تشغيل"),
         ("ش [رابط]", "تشغيل أغنية من رابط مباشر"),
         ("قائمة", "عرض قائمة التشغيل"),
         ("تخطي", "تخطي الأغنية الحالية"),
-        ("قف", "إيقاف مؤقت للأغنية"),
+        ("إيقاف_مؤقت", "إيقاف مؤقت للأغنية"),
         ("كمل", "استئناف الأغنية المتوقفة"),
         ("كرر", "تفعيل تكرار الأغنية الحالية"),
         ("ا", "إيقاف تكرار الأغنية"),
-        ("شوي [0-100]", "تغيير مستوى الصوت"),
+        ("مستوى_صوت [0-100]", "تغيير مستوى الصوت"),
         ("إيقاف", "إيقاف الموسيقى والخروج من القناة"),
         ("تست", "اختبار البوت"),
         ("أوامر", "عرض هذه القائمة")
     ]
     
     for cmd, desc in commands_list:
-        embed.add_field(name=f"`{DISCORD_PREFIX}{cmd}`", value=desc, inline=False)
+        embed.add_field(name=f"`{cmd}`", value=desc, inline=False)
     
     await ctx.send(embed=embed)
 
