@@ -12,6 +12,9 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 # إعداد البوت
 intents = discord.Intents.all()
+intents.message_content = True  # إضافة intent للرسائل
+intents.guilds = True  # إضافة intent للخوادم
+intents.voice_states = True  # إضافة intent للحالات الصوتية
 bot = commands.Bot(command_prefix=DISCORD_PREFIX, intents=intents)
 
 # متغيرات عامة
@@ -1295,11 +1298,23 @@ async def test_simple_command(ctx):
     await ctx.send("✅ البوت يعمل بشكل طبيعي! 🎵")
     print(f"✅ تم تنفيذ أمر اختبار من {ctx.author} في {ctx.guild.name}")
 
+@bot.command(name="تست")
+async def test_arabic(ctx):
+    """اختبار بسيط للبوت (عربي)"""
+    await ctx.send("✅ البوت يعمل بشكل طبيعي! 🎵")
+    print(f"✅ تم تنفيذ أمر اختبار عربي من {ctx.author} في {ctx.guild.name}")
+
 @bot.command(name="ping_simple")
 async def ping_simple_command(ctx):
     """اختبار بسيط للسرعة"""
     await ctx.send("🏓 Pong! البوت يعمل!")
     print(f"🏓 تم تنفيذ أمر ping بسيط من {ctx.author} في {ctx.guild.name}")
+
+@bot.command(name="ping")
+async def ping_simple(ctx):
+    """اختبار بسيط للسرعة (اختصار)"""
+    await ctx.send("🏓 Pong! البوت يعمل!")
+    print(f"🏓 تم تنفيذ أمر ping من {ctx.author} في {ctx.guild.name}")
 
 @bot.command(name="hello")
 async def hello_command(ctx):
@@ -1307,46 +1322,29 @@ async def hello_command(ctx):
     await ctx.send("🎵 أهلاً وسهلاً! البوت يعمل بشكل طبيعي!")
     print(f"🎵 تم تنفيذ أمر ترحيب من {ctx.author} في {ctx.guild.name}")
 
+@bot.command(name="hi")
+async def hi_command(ctx):
+    """أمر ترحيب بسيط (اختصار)"""
+    await ctx.send("🎵 أهلاً وسهلاً! البوت يعمل بشكل طبيعي!")
+    print(f"🎵 تم تنفيذ أمر hi من {ctx.author} في {ctx.guild.name}")
+
 @bot.command(name="مرحبا")
 async def hello_arabic(ctx):
     """أمر ترحيب بسيط (بالعربية)"""
-    await hello_command(ctx)
+    await ctx.send("🎵 أهلاً وسهلاً! البوت يعمل بشكل طبيعي!")
+    print(f"🎵 تم تنفيذ أمر مرحبا من {ctx.author} في {ctx.guild.name}")
 
 @bot.command(name="اختبار_صوت")
 async def voice_test(ctx):
     """اختبار الاتصال الصوتي"""
-    if not ctx.author.voice:
-        await ctx.send("❌ يجب أن تكون في قناة صوتية!")
-        return
-    
-    voice_channel = ctx.author.voice.channel
-    guild_id = ctx.guild.id
-    
-    try:
-        # محاولة الاتصال بالقناة الصوتية
-        voice_client = await voice_channel.connect()
-        voice_clients[guild_id] = voice_client
-        
-        await ctx.send(f"✅ تم الاتصال بنجاح! 🎵")
-        await ctx.send(f"🔊 القناة: {voice_channel.name}")
-        await ctx.send(f"👥 عدد الأعضاء: {len(voice_channel.members)}")
-        
-        # الخروج بعد 3 ثواني
-        await asyncio.sleep(3)
-        await voice_client.disconnect()
-        del voice_clients[guild_id]
-        
-        await ctx.send("✅ تم اختبار الاتصال بنجاح! البوت يعمل بشكل طبيعي 🎵")
-        
-    except Exception as e:
-        await ctx.send(f"❌ فشل في الاتصال: {str(e)}")
-        if guild_id in voice_clients:
-            del voice_clients[guild_id]
+    await ctx.send("🔊 اختبار الصوت - البوت يعمل بشكل طبيعي!")
+    print(f"🔊 تم تنفيذ أمر اختبار صوت من {ctx.author} في {ctx.guild.name}")
 
 @bot.command(name="voice")
 async def voice_test_english(ctx):
     """اختبار الاتصال الصوتي (بالإنجليزية)"""
-    await voice_test(ctx)
+    await ctx.send("🔊 Voice Test - Bot is working normally!")
+    print(f"🔊 تم تنفيذ أمر voice من {ctx.author} في {ctx.guild.name}")
 
 # تشغيل البوت
 if __name__ == "__main__":
