@@ -1298,11 +1298,7 @@ async def test_simple_command(ctx):
     await ctx.send("✅ البوت يعمل بشكل طبيعي! 🎵")
     print(f"✅ تم تنفيذ أمر اختبار من {ctx.author} في {ctx.guild.name}")
 
-@bot.command(name="تست")
-async def test_arabic(ctx):
-    """اختبار بسيط للبوت (عربي)"""
-    await ctx.send("✅ البوت يعمل بشكل طبيعي! 🎵")
-    print(f"✅ تم تنفيذ أمر اختبار عربي من {ctx.author} في {ctx.guild.name}")
+
 
 @bot.command(name="ping_simple")
 async def ping_simple_command(ctx):
