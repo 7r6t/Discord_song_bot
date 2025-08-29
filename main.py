@@ -14,6 +14,12 @@ os.environ['REQUESTS_CA_BUNDLE'] = ''
 os.environ['CURL_CA_BUNDLE'] = ''
 ssl._create_default_https_context = ssl._create_unverified_context
 
+# إنشاء سياق SSL مخصص
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
+ssl._create_default_https_context = lambda: ssl_context
+
 # إعداد البوت
 intents = discord.Intents.all()
 intents.message_content = True  # إضافة intent للرسائل
@@ -72,13 +78,13 @@ yt_dl_opts = {
         'Sec-Fetch-Site': 'none',
         'Cache-Control': 'max-age=0'
     },
-    'extractor_retries': 2,
-    'fragment_retries': 2,
-    'retries': 2,
+    'extractor_retries': 1,
+    'fragment_retries': 1,
+    'retries': 1,
     'sleep_interval': 0,
     'max_sleep_interval': 0,
     'sleep_interval_requests': 0,
-    'socket_timeout': 15,
+    'socket_timeout': 10,
     'extractor_args': {
         'youtube': {
             'skip': ['dash', 'live'],
@@ -109,6 +115,9 @@ yt_dl_opts = {
     'no_check_certificate': True,
     'nocheckcertificate': True,
     'cafile': None,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
     'nocheckcertificate': True,
     'no_check_certificate': True,
     'prefer_insecure': True
@@ -365,6 +374,11 @@ async def search_song(query):
         current_opts['no_check_certificate'] = True
         current_opts['prefer_insecure'] = True
         current_opts['cafile'] = None
+        
+        # إضافة إعدادات SSL متقدمة
+        current_opts['nocheckcertificate'] = True
+        current_opts['no_check_certificate'] = True
+        current_opts['prefer_insecure'] = True
         
         # محاولة البحث
         if query.startswith(('http://', 'https://')):
