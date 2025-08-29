@@ -81,8 +81,11 @@ yt_dl_opts = {
 @bot.event
 async def on_ready():
     """حدث عند تشغيل البوت"""
+    import time
+    bot.start_time = time.time()  # تسجيل وقت بدء التشغيل
+    
     print(f"✅ {bot.user} تم تشغيله بنجاح!")
-    await bot.change_presence(activity=discord.Game(name="🎵 استمع للموسيقى"))
+    await bot.change_presence(activity=discord.Game(name="�� استمع للموسيقى"))
 
 @bot.command(name="ش")
 async def play(ctx, *, query):
@@ -1251,6 +1254,42 @@ async def hello_command(ctx):
 async def hello_arabic(ctx):
     """أمر ترحيب بسيط (بالعربية)"""
     await hello_command(ctx)
+
+@bot.command(name="صوت")
+async def voice_test(ctx):
+    """اختبار الاتصال الصوتي"""
+    if not ctx.author.voice:
+        await ctx.send("❌ يجب أن تكون في قناة صوتية!")
+        return
+    
+    voice_channel = ctx.author.voice.channel
+    guild_id = ctx.guild.id
+    
+    try:
+        # محاولة الاتصال بالقناة الصوتية
+        voice_client = await voice_channel.connect()
+        voice_clients[guild_id] = voice_client
+        
+        await ctx.send(f"✅ تم الاتصال بنجاح! 🎵")
+        await ctx.send(f"🔊 القناة: {voice_channel.name}")
+        await ctx.send(f"👥 عدد الأعضاء: {len(voice_channel.members)}")
+        
+        # الخروج بعد 3 ثواني
+        await asyncio.sleep(3)
+        await voice_client.disconnect()
+        del voice_clients[guild_id]
+        
+        await ctx.send("✅ تم اختبار الاتصال بنجاح! البوت يعمل بشكل طبيعي 🎵")
+        
+    except Exception as e:
+        await ctx.send(f"❌ فشل في الاتصال: {str(e)}")
+        if guild_id in voice_clients:
+            del voice_clients[guild_id]
+
+@bot.command(name="voice")
+async def voice_test_english(ctx):
+    """اختبار الاتصال الصوتي (بالإنجليزية)"""
+    await voice_test(ctx)
 
 # تشغيل البوت
 if __name__ == "__main__":
