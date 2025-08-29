@@ -1336,7 +1336,7 @@ async def on_message(message):
     
     # رسالة ترحيب
     if message.content.lower() in ['هلا', 'مرحبا', 'السلام عليكم', 'hello', 'hi']:
-        await message.channel.send(f"🎵 أهلاً وسهلاً! استخدم `{DISCORD_PREFIX}أوامر` لرؤية الأوامر المتاحة")
+        await message.channel.send(f"🎵 أهلاً وسهلاً! استخدم `أوامر` لرؤية الأوامر المتاحة")
 
 @bot.event
 async def on_command_error(ctx, error):
