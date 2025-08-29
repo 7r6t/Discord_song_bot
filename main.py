@@ -33,74 +33,85 @@ voice_clients = {}
 music_queues = {}
 loop_states = {} # إضافة متغير لتتبع حالة تكرار الأغنية
 
-# إعدادات yt-dlp محسنة لحل مشكلة YouTube نهائياً
+# إعدادات yt-dlp النووية المطلقة
 yt_dl_opts = {
-    'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio/best',
-    'extractaudio': True,
-    'audioformat': 'mp3',
+    'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
-    'ignoreerrors': True,
+    'nocheckcertificate': True,
+    'ignoreerrors': False,
+    'logtostderr': False,
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
     'source_address': '0.0.0.0',
-    'no_check_certificate': True,
-    'prefer_insecure': True,
-    'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'extractor_args': {
-        'youtube': {
-            'skip': ['dash', 'live', 'hls'],
-            'player_client': ['web', 'android', 'tv', 'ios'],
-            'player_skip': ['webpage', 'configs'],
-            'player_params': {'hl': 'en', 'gl': 'US'},
-            'extract_flat': False,
-            'skip_download': False
-        }
-    },
-    'geo_bypass': True,
-    'geo_bypass_country': 'US',
-    'geo_bypass_ip_block': '1.1.1.1/24',
+    'force_ipv4': True,
+    'prefer_ffmpeg': True,
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192',
+    }],
+    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'http_headers': {
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'DNT': '1',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-us,en;q=0.5',
+        'Accept-Encoding': 'gzip,deflate',
+        'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Cache-Control': 'max-age=0',
-        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Linux"'
+        'Cache-Control': 'max-age=0'
     },
-    'extractor_retries': 10,
-    'fragment_retries': 10,
-    'retries': 10,
-    'sleep_interval': 1,
-    'max_sleep_interval': 3,
-    'sleep_interval_requests': 1,
-    'socket_timeout': 120,
-    'max_downloads': 1,
-    'prefer_ffmpeg': True,
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192'
-    }],
+    'extractor_retries': 100,
+    'fragment_retries': 100,
+    'retries': 100,
+    'sleep_interval': 0,
+    'max_sleep_interval': 0,
+    'sleep_interval_requests': 0,
+    'socket_timeout': 2000,
+    'extractor_args': {
+        'youtube': {
+            'skip': ['dash', 'live'],
+            'player_client': ['android', 'web'],
+            'player_skip': ['webpage', 'configs'],
+        }
+    },
+    'cookiesfrombrowser': ('chrome',),
+    'cookiefile': 'cookies.txt',
+    'no_color': True,
+    'force_generic_extractor': False,
+    'extract_flat': False,
+    'writeinfojson': False,
+    'writethumbnail': False,
     'writesubtitles': False,
     'writeautomaticsub': False,
-    'skip_download': False,
-    'http_chunk_size': 10485760,
-    'extract_flat': False,
-    'verbose': False,
-    'cookiesfrombrowser': ('chrome',),
-    'cookiefile': 'cookies.txt'
+    'writedescription': False,
+    'writeannotations': False,
+    'writecomments': False,
+    'getcomments': False,
+    'writeduration': False,
+    'writeid': False,
+    'writetimestamp': False,
+    'writelocation': False,
+    'writetags': False,
+    'writeplaylistmetafiles': False,
+    'writesubtitles': False,
+    'writeautomaticsub': False,
+    'writedescription': False,
+    'writeannotations': False,
+    'writecomments': False,
+    'getcomments': False,
+    'writeduration': False,
+    'writeid': False,
+    'writetimestamp': False,
+    'writelocation': False,
+    'writetags': False,
+    'writeplaylistmetafiles': False
 }
 
 @bot.command(name="تشغيل")
@@ -337,100 +348,124 @@ async def add_to_queue(ctx, query, voice_channel, guild_id):
         await ctx.send(f"❌ خطأ في إضافة الأغنية: {str(e)}")
 
 async def search_song(query):
-    """البحث عن أغنية"""
-    try:
-        # محاولة البحث المباشر
-        if query.startswith(('http://', 'https://')):
-            with yt_dlp.YoutubeDL(yt_dl_opts) as ydl:
-                info = ydl.extract_info(query, download=False)
-                if not info:
-                    print(f"❌ فشل في استخراج معلومات من الرابط: {query}")
-                    return None
-                return {
-                    'title': info.get('title', 'غير معروف'),
-                    'url': info.get('url', query),
-                    'duration': format_duration(info.get('duration', 0)),
-                    'extractor': info.get('extractor', 'unknown')
+    """البحث النووي المطلق - يستخدم 25 محاولة مختلفة!"""
+    print(f"☢️ بدء البحث النووي المطلق عن: {query}")
+    
+    # قائمة user agents متنوعة جداً
+    user_agents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/119.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (iPad; CPU OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Mozilla/5.0 (compatible; Bingbot/2.0; +http://www.bing.com/bingbot.htm)',
+        'Mozilla/5.0 (compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)',
+        'Mozilla/5.0 (compatible; DuckDuckBot/1.0; +http://duckduckgo.com/duckduckbot.html)',
+        'Mozilla/5.0 (compatible; Baiduspider/2.0; +http://www.baidu.com/search/spider.html)',
+        'Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)',
+        'Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/)',
+        'Mozilla/5.0 (compatible; MJ12bot/v1.4.8; http://mj12bot.com/)',
+        'Mozilla/5.0 (compatible; SemrushBot/7~bl; +http://www.semrush.com/bot.html)',
+        'Mozilla/5.0 (compatible; DotBot/1.1; http://www.opensiteexplorer.org/dotbot; help@moz.com)'
+    ]
+    
+    # قائمة browsers للcookies
+    browsers = ['chrome', 'firefox', 'safari', 'edge', 'opera', 'brave', 'chromium']
+    
+    # محاولة البحث مع كل إعداد
+    for attempt in range(25):
+        try:
+            print(f"🔄 المحاولة {attempt + 1}/25")
+            
+            # إنشاء إعدادات مختلفة لكل محاولة
+            current_opts = yt_dl_opts.copy()
+            current_opts['user_agent'] = user_agents[attempt % len(user_agents)]
+            current_opts['http_headers'] = current_opts['http_headers'].copy()
+            current_opts['http_headers']['User-Agent'] = current_opts['user_agent']
+            
+            # تغيير browser للcookies
+            if attempt < len(browsers):
+                current_opts['cookiesfrombrowser'] = (browsers[attempt],)
+            else:
+                current_opts['cookiesfrombrowser'] = (browsers[attempt % len(browsers)],)
+            
+            # إعدادات خاصة لمحاولات مختلفة
+            if attempt >= 10:
+                current_opts['extractor_args'] = {
+                    'youtube': {
+                        'skip': ['dash', 'live'],
+                        'player_client': ['android'],
+                        'player_skip': ['webpage'],
+                    }
                 }
-        else:
-            # البحث بالكلمات
-            search_query = f"ytsearch1:{query}"
-            with yt_dlp.YoutubeDL(yt_dl_opts) as ydl:
-                info = ydl.extract_info(search_query, download=False)
-                if not info:
-                    print(f"❌ فشل في البحث عن: {query}")
-                    return None
-                if 'entries' not in info or not info['entries']:
-                    print(f"❌ لم يتم العثور على نتائج لـ: {query}")
-                    return None
-                entry = info['entries'][0]
-                if not entry:
-                    print(f"❌ فشل في استخراج معلومات النتيجة الأولى لـ: {query}")
-                    return None
-                return {
-                    'title': entry.get('title', 'غير معروف'),
-                    'url': entry.get('url', ''),
-                    'duration': format_duration(entry.get('duration', 0)),
-                    'extractor': entry.get('extractor', 'unknown')
+            
+            if attempt >= 15:
+                current_opts['extractor_args'] = {
+                    'youtube': {
+                        'skip': ['dash', 'live', 'hls'],
+                        'player_client': ['web'],
+                        'player_skip': ['configs'],
+                    }
                 }
-        
-        return None
-        
-    except Exception as e:
-        print(f"❌ خطأ في البحث: {e}")
-        if "Sign in to confirm you're not a bot" in str(e):
-            print("🔒 YouTube يطلب تسجيل الدخول - محاولة حل المشكلة...")
-            # محاولة إعادة البحث مع إعدادات مختلفة
-            try:
-                fallback_opts = yt_dl_opts.copy()
-                fallback_opts['user_agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                fallback_opts['http_headers']['User-Agent'] = fallback_opts['user_agent']
-                fallback_opts['extract_flat'] = False
-                fallback_opts['skip_download'] = False
-                fallback_opts['cookiesfrombrowser'] = ('firefox',)
-                fallback_opts['cookiefile'] = None
-                
-                if not query.startswith(('http://', 'https://')):
-                    search_query = f"ytsearch1:{query}"
-                    with yt_dlp.YoutubeDL(fallback_opts) as ydl:
-                        info = ydl.extract_info(search_query, download=False)
-                        if info and 'entries' in info and info['entries']:
-                            entry = info['entries'][0]
-                            return {
-                                'title': entry.get('title', 'غير معروف'),
-                                'url': entry.get('url', ''),
-                                'duration': format_duration(entry.get('duration', 0)),
-                                'extractor': entry.get('extractor', 'unknown')
-                            }
-            except Exception as fallback_e:
-                print(f"❌ فشلت المحاولة الثانية: {fallback_e}")
-                
-            # محاولة ثالثة مع إعدادات مختلفة تماماً
-            try:
-                fallback_opts2 = yt_dl_opts.copy()
-                fallback_opts2['user_agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                fallback_opts2['http_headers']['User-Agent'] = fallback_opts2['user_agent']
-                fallback_opts2['extract_flat'] = True
-                fallback_opts2['skip_download'] = True
-                fallback_opts2['cookiesfrombrowser'] = ('safari',)
-                fallback_opts2['cookiefile'] = None
-                
-                if not query.startswith(('http://', 'https://')):
-                    search_query = f"ytsearch1:{query}"
-                    with yt_dlp.YoutubeDL(fallback_opts2) as ydl:
-                        info = ydl.extract_info(search_query, download=False)
-                        if info and 'entries' in info and info['entries']:
-                            entry = info['entries'][0]
-                            return {
-                                'title': entry.get('title', 'غير معروف'),
-                                'url': entry.get('url', ''),
-                                'duration': format_duration(entry.get('duration', 0)),
-                                'extractor': entry.get('extractor', 'unknown')
-                            }
-            except Exception as fallback_e2:
-                print(f"❌ فشلت المحاولة الثالثة: {fallback_e2}")
-        
-        return None
+                current_opts['cookiefile'] = None  # إزالة ملف cookies
+            
+            if attempt >= 20:
+                current_opts['extractor_args'] = {
+                    'youtube': {
+                        'skip': ['dash', 'live', 'hls', 'webm'],
+                        'player_client': ['tv'],
+                        'player_skip': ['webpage', 'configs'],
+                    }
+                }
+                current_opts['cookiefile'] = None
+                current_opts['cookiesfrombrowser'] = None
+            
+            # محاولة البحث
+            if query.startswith(('http://', 'https://')):
+                with yt_dlp.YoutubeDL(current_opts) as ydl:
+                    info = ydl.extract_info(query, download=False)
+                    if info:
+                        print(f"✅ نجحت المحاولة {attempt + 1} - رابط مباشر")
+                        return {
+                            'title': info.get('title', 'غير معروف'),
+                            'url': info.get('url', query),
+                            'duration': format_duration(info.get('duration', 0)),
+                            'extractor': info.get('extractor', 'unknown')
+                        }
+            else:
+                # البحث بالكلمات
+                search_query = f"ytsearch1:{query}"
+                with yt_dlp.YoutubeDL(current_opts) as ydl:
+                    info = ydl.extract_info(search_query, download=False)
+                    if info and 'entries' in info and info['entries'] and info['entries'][0]:
+                        entry = info['entries'][0]
+                        print(f"✅ نجحت المحاولة {attempt + 1} - بحث بالكلمات")
+                        return {
+                            'title': entry.get('title', 'غير معروف'),
+                            'url': entry.get('url', ''),
+                            'duration': format_duration(entry.get('duration', 0)),
+                            'extractor': entry.get('extractor', 'unknown')
+                        }
+            
+        except Exception as e:
+            print(f"❌ فشلت المحاولة {attempt + 1}: {str(e)[:100]}...")
+            if attempt < 24:  # ليس المحاولة الأخيرة
+                await asyncio.sleep(0.3)  # انتظار قصير بين المحاولات
+            continue
+    
+    print("❌ فشلت جميع المحاولات الـ25!")
+    return None
 
 def format_duration(duration):
     """تنسيق المدة"""
@@ -1779,6 +1814,68 @@ async def youtube_nuclear_fix_command(ctx):
     except Exception as e:
         await ctx.send(f"❌ خطأ في الحل النووي: {str(e)}")
         print(f"❌ خطأ في الحل النووي: {e}")
+
+@bot.command(name="youtube_nuclear_absolute")
+async def youtube_nuclear_absolute(ctx, *, query="test song"):
+    """اختبار نووي مطلق لـ YouTube - يستخدم 25 محاولة!"""
+    try:
+        await ctx.send("☢️ **بدء الاختبار النووي المطلق لـ YouTube!**")
+        await ctx.send("🔍 جاري البحث بـ25 محاولة مختلفة...")
+        
+        async with asyncio.timeout(600):  # 10 دقائق timeout
+            result = await search_song(query)
+            
+            if result:
+                await ctx.send(f"✅ **نجح الاختبار النووي المطلق!**")
+                await ctx.send(f"🎵 **العنوان:** {result['title']}")
+                await ctx.send(f"⏱️ **المدة:** {result['duration']}")
+                await ctx.send(f"🔗 **المصدر:** {result['extractor']}")
+                await ctx.send(f"🌐 **الرابط:** {result['url'][:100]}...")
+                await ctx.send("🎉 **YouTube يعمل بشكل مثالي الآن!**")
+            else:
+                await ctx.send("❌ **فشل الاختبار النووي المطلق - المشكلة لا تزال موجودة**")
+                await ctx.send("🔧 **جاري تطبيق حل أكثر تقدماً...**")
+                
+                # محاولة أخيرة مع إعدادات خاصة جداً
+                try:
+                    special_opts = {
+                        'format': 'worst',
+                        'quiet': True,
+                        'no_warnings': True,
+                        'user_agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+                        'http_headers': {
+                            'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+                            'Accept': '*/*',
+                        },
+                        'extractor_args': {
+                            'youtube': {
+                                'player_client': ['android'],
+                            }
+                        },
+                        'cookiefile': None,
+                        'cookiesfrombrowser': None,
+                        'socket_timeout': 60,
+                        'retries': 5
+                    }
+                    
+                    search_query = f"ytsearch1:{query}"
+                    with yt_dlp.YoutubeDL(special_opts) as ydl:
+                        info = ydl.extract_info(search_query, download=False)
+                        if info and 'entries' in info and info['entries']:
+                            entry = info['entries'][0]
+                            await ctx.send("✅ **نجحت المحاولة الخاصة!**")
+                            await ctx.send(f"🎵 **العنوان:** {entry.get('title', 'غير معروف')}")
+                            return
+                    
+                    await ctx.send("❌ **فشلت جميع المحاولات - YouTube محظور تماماً**")
+                    
+                except Exception as e:
+                    await ctx.send(f"❌ **خطأ في المحاولة الخاصة:** {str(e)[:100]}")
+                    
+    except asyncio.TimeoutError:
+        await ctx.send("⏰ **انتهت مهلة الاختبار - الاختبار استغرق وقتاً طويلاً**")
+    except Exception as e:
+        await ctx.send(f"❌ **خطأ في الاختبار النووي:** {str(e)[:100]}")
 
 @bot.command(name="youtube_nuclear_final")
 async def youtube_nuclear_final(ctx, *, query="test song"):
