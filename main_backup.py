@@ -103,6 +103,15 @@ yt_dl_opts = {
     'cookiefile': 'cookies.txt'
 }
 
+@bot.event
+async def on_ready():
+    """حدث عند تشغيل البوت"""
+    import time
+    bot.start_time = time.time()  # تسجيل وقت بدء التشغيل
+    
+    print(f"✅ {bot.user} تم تشغيله بنجاح!")
+    await bot.change_presence(activity=discord.Game(name="🎵 استمع للموسيقى"))
+
 @bot.command(name="تشغيل")
 async def play(ctx, *, query):
     """تشغيل أغنية من YouTube أو SoundCloud"""
@@ -1059,7 +1068,7 @@ async def show_status(ctx):
     embed.add_field(name="💻 نظام التشغيل", value=platform.system(), inline=True)
     embed.add_field(name="🔧 إصدار Discord.py", value=discord.__version__, inline=True)
     
-    embed.set_footer(text=f"🎵 {bot.user.name} - بوت موسيقى متطور")
+    embed.set_footer(text="🎵 البوت يعمل بشكل طبيعي")
     await ctx.send(embed=embed)
 
 @bot.command(name="حالة")
@@ -1361,6 +1370,37 @@ async def show_bot_info(ctx):
     embed.set_footer(text=f"🎵 {bot.user.name} - بوت موسيقى متطور")
     await ctx.send(embed=embed)
 
+@bot.event
+async def on_message(message):
+    """معالجة جميع الرسائل - محسنة للأداء"""
+    try:
+        # تجاهل رسائل البوت
+        if message.author == bot.user:
+            return
+        
+        # معالجة الأوامر أولاً
+        await bot.process_commands(message)
+        
+        # رسالة ترحيب سريعة باستخدام create_task
+        content_lower = message.content.lower()
+        if content_lower in ['هلا', 'مرحبا', 'السلام عليكم', 'hello', 'hi']:
+            # استخدام create_task لتجنب blocking
+            asyncio.create_task(
+                message.channel.send("🎵 اهلاً وسهلاً! استخدم `اوامر` لرؤية الاوامر المتاحة")
+            )
+            
+    except Exception as e:
+        print(f"❌ خطأ في on_message: {e}")
+        # لا نريد أن نوقف البوت بسبب خطأ في رسالة واحدة
+
+@bot.event
+async def on_command_error(ctx, error):
+    """معالجة أخطاء الأوامر"""
+    if isinstance(error, commands.CommandNotFound):
+        return
+    
+    await ctx.send(f"❌ خطأ: {str(error)}")
+
 @bot.command(name="test_simple")
 async def test_simple_command(ctx):
     """اختبار بسيط للبوت"""
@@ -1582,32 +1622,6 @@ async def ping_test_command(ctx):
     except Exception as e:
         await ctx.send(f"❌ خطأ في اختبار ping: {str(e)}")
         print(f"❌ خطأ في اختبار ping: {e}")
-
-# أوامر ترحيب بدلاً من on_message
-@bot.command(name="هلا")
-async def hello_command_arabic(ctx):
-    """أمر ترحيب بالعربية"""
-    await ctx.send("🎵 اهلاً وسهلاً! استخدم `اوامر` لرؤية الاوامر المتاحة")
-
-@bot.command(name="مرحبا")
-async def hello_command_arabic_2(ctx):
-    """أمر ترحيب بالعربية (بديل)"""
-    await ctx.send("🎵 اهلاً وسهلاً! استخدم `اوامر` لرؤية الاوامر المتاحة")
-
-@bot.command(name="السلام عليكم")
-async def hello_command_arabic_3(ctx):
-    """أمر ترحيب بالعربية (سلام)"""
-    await ctx.send("🎵 وعليكم السلام! استخدم `اوامر` لرؤية الاوامر المتاحة")
-
-@bot.command(name="hello")
-async def hello_command_english(ctx):
-    """أمر ترحيب بالإنجليزية"""
-    await ctx.send("🎵 Hello! Use `اوامر` to see available commands")
-
-@bot.command(name="hi")
-async def hi_command_english(ctx):
-    """أمر ترحيب بالإنجليزية (اختصار)"""
-    await ctx.send("🎵 Hi! Use `اوامر` to see available commands")
 
 # تشغيل البوت
 if __name__ == "__main__":
