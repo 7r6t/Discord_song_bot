@@ -1215,10 +1215,11 @@ async def on_command_error(ctx, error):
     
     await ctx.send(f"❌ خطأ: {str(error)}")
 
-@bot.command(name="مرحبا")
-async def hello_arabic(ctx):
-    """أمر ترحيب بسيط (بالعربية)"""
-    await hello_command(ctx)
+@bot.command(name="test_simple")
+async def test_simple_command(ctx):
+    """اختبار بسيط للبوت"""
+    await ctx.send("✅ البوت يعمل بشكل طبيعي! 🎵")
+    print(f"✅ تم تنفيذ أمر اختبار من {ctx.author} في {ctx.guild.name}")
 
 @bot.command(name="ping_simple")
 async def ping_simple_command(ctx):
@@ -1226,17 +1227,16 @@ async def ping_simple_command(ctx):
     await ctx.send("🏓 Pong! البوت يعمل!")
     print(f"🏓 تم تنفيذ أمر ping بسيط من {ctx.author} في {ctx.guild.name}")
 
-@bot.command(name="test_simple")
-async def test_simple_command(ctx):
-    """اختبار بسيط للبوت"""
-    await ctx.send("✅ البوت يعمل بشكل طبيعي! 🎵")
-    print(f"✅ تم تنفيذ أمر اختبار من {ctx.author} في {ctx.guild.name}")
-
 @bot.command(name="hello")
 async def hello_command(ctx):
     """أمر ترحيب بسيط"""
     await ctx.send("🎵 أهلاً وسهلاً! البوت يعمل بشكل طبيعي!")
     print(f"🎵 تم تنفيذ أمر ترحيب من {ctx.author} في {ctx.guild.name}")
+
+@bot.command(name="مرحبا")
+async def hello_arabic(ctx):
+    """أمر ترحيب بسيط (بالعربية)"""
+    await hello_command(ctx)
 
 # تشغيل البوت
 if __name__ == "__main__":
