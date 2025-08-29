@@ -54,7 +54,9 @@ bot = commands.Bot(
     activity=discord.Game(name="🎵 استمع للموسيقى"),  # تعيين النشاط
     command_timeout=60,  # timeout للأوامر
     max_concurrency=10,  # أقصى عدد أوامر متزامنة
-    case_insensitive=True  # تجاهل حالة الأحرف
+    case_insensitive=True,  # تجاهل حالة الأحرف
+    voice_timeout=120.0,  # timeout للصوت
+    max_voice_retries=5  # أقصى عدد محاولات للصوت
 )
 
 # متغيرات عامة
@@ -590,6 +592,17 @@ async def install_ffmpeg():
         print(f"❌ فشل تثبيت ffmpeg: {e}")
         return False
 
+async def restart_bot():
+    """إعادة تشغيل البوت"""
+    try:
+        print("🔄 جاري إعادة تشغيل البوت...")
+        await bot.close()
+        import os
+        import sys
+        os.execv(sys.executable, ['python'] + sys.argv)
+    except Exception as e:
+        print(f"❌ فشل إعادة تشغيل البوت: {e}")
+
 async def reconnect_voice(guild_id, voice_channel):
     """إعادة الاتصال بالقناة الصوتية مع إصلاح خطأ 4006"""
     try:
@@ -606,7 +619,13 @@ async def reconnect_voice(guild_id, voice_channel):
         
         # محاولة الاتصال الجديد مع إصلاح خطأ 4006
         try:
-            voice_client = await voice_channel.connect(timeout=30.0, self_deaf=True, self_mute=False)
+            # إعدادات خاصة لتجنب خطأ 4006
+            voice_client = await voice_channel.connect(
+                timeout=30.0, 
+                self_deaf=True, 
+                self_mute=False,
+                reconnect=True  # إعادة اتصال تلقائية
+            )
             voice_clients[guild_id] = voice_client
             print(f"✅ تم إعادة الاتصال بنجاح: {voice_channel.name}")
             return voice_client
@@ -615,11 +634,35 @@ async def reconnect_voice(guild_id, voice_channel):
                 print("🔧 خطأ 4006 - جاري إصلاحه...")
                 # انتظار أطول
                 await asyncio.sleep(10)
-                # محاولة ثانية
-                voice_client = await voice_channel.connect(timeout=60.0, self_deaf=True, self_mute=False)
-                voice_clients[guild_id] = voice_client
-                print(f"✅ تم إصلاح خطأ 4006: {voice_channel.name}")
-                return voice_client
+                # محاولة ثانية مع إعدادات مختلفة
+                try:
+                    voice_client = await voice_channel.connect(
+                        timeout=60.0, 
+                        self_deaf=True, 
+                        self_mute=False,
+                        reconnect=True
+                    )
+                    voice_clients[guild_id] = voice_client
+                    print(f"✅ تم إصلاح خطأ 4006: {voice_channel.name}")
+                    return voice_client
+                except Exception as e2:
+                    print(f"❌ فشلت المحاولة الثانية: {e2}")
+                    # محاولة ثالثة مع إعدادات بسيطة
+                    try:
+                        voice_client = await voice_channel.connect(
+                            timeout=120.0,
+                            self_deaf=True,
+                            self_mute=False
+                        )
+                        voice_clients[guild_id] = voice_client
+                        print(f"✅ نجحت المحاولة الثالثة: {voice_channel.name}")
+                        return voice_client
+                    except Exception as e3:
+                        print(f"❌ فشلت المحاولة الثالثة: {e3}")
+                        # حل أخير: إعادة تشغيل البوت
+                        print("🔄 تطبيق الحل الأخير: إعادة تشغيل البوت...")
+                        await restart_bot()
+                        return None
             else:
                 raise e
         
@@ -2104,6 +2147,15 @@ async def fix_ffmpeg_command(ctx):
                 
     except Exception as e:
         await ctx.send(f"❌ خطأ في إصلاح ffmpeg: {str(e)}")
+
+@bot.command(name="restart")
+async def restart_command(ctx):
+    """إعادة تشغيل البوت"""
+    try:
+        await ctx.send("🔄 جاري إعادة تشغيل البوت...")
+        await restart_bot()
+    except Exception as e:
+        await ctx.send(f"❌ خطأ في إعادة التشغيل: {str(e)}")
 
 @bot.command(name="youtube_nuclear_final")
 async def youtube_nuclear_final(ctx, *, query="test song"):
