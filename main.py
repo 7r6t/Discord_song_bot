@@ -246,11 +246,6 @@ async def test_arabic(ctx):
     """اختبار البوت (بالعربية)"""
     await test(ctx)
 
-@bot.command(name="شوي")
-async def pause_short(ctx):
-    """إيقاف مؤقت للأغنية (اختصار)"""
-    await pause(ctx)
-
 @bot.command(name="volume")
 async def volume_english(ctx, level: int = None):
     """تغيير مستوى الصوت (0-100) (بالإنجليزية)"""
@@ -444,10 +439,7 @@ async def skip(ctx):
     voice_clients[guild_id].stop()
     await ctx.send("⏭️ تم تخطي الأغنية!")
 
-@bot.command(name="skip")
-async def skip_english(ctx):
-    """تخطي الأغنية الحالية (بالإنجليزية)"""
-    await skip(ctx)
+
 
 @bot.command(name="إيقاف")
 async def stop(ctx):
@@ -481,10 +473,7 @@ async def stop_english(ctx):
     """إيقاف الموسيقى والخروج من القناة (بالإنجليزية)"""
     await stop(ctx)
 
-@bot.command(name="قف")
-async def stop_arabic(ctx):
-    """إيقاف الموسيقى والخروج من القناة (بالعربية)"""
-    await stop(ctx)
+
 
 @bot.command(name="أوامر")
 async def help_commands(ctx):
@@ -1323,7 +1312,7 @@ async def hello_arabic(ctx):
     """أمر ترحيب بسيط (بالعربية)"""
     await hello_command(ctx)
 
-@bot.command(name="صوت")
+@bot.command(name="اختبار_صوت")
 async def voice_test(ctx):
     """اختبار الاتصال الصوتي"""
     if not ctx.author.voice:
