@@ -456,7 +456,7 @@ async def help_commands(ctx):
     
     await ctx.send(embed=embed)
 
-@bot.command(name="help")
+@bot.command(name="help_cmd")
 async def help_english(ctx):
     """عرض أوامر البوت (بالإنجليزية)"""
     await help_commands(ctx)
