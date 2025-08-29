@@ -1,0 +1,3 @@
+# YouTube Cookies File
+# This file is used to bypass YouTube bot detection
+# Leave empty for now - will be populated automatically

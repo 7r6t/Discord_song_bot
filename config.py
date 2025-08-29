@@ -5,7 +5,7 @@ load_dotenv()
 
 # Discord Bot Configuration
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-DISCORD_PREFIX = os.getenv('DISCORD_PREFIX', '!')
+DISCORD_PREFIX = os.getenv('DISCORD_PREFIX', '')
 
 # YouTube Configuration
 YOUTUBE_COOKIES_FILE = 'youtube_cookies.txt'
