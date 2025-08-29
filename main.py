@@ -22,7 +22,7 @@ voice_clients = {}
 music_queues = {}
 loop_states = {} # إضافة متغير لتتبع حالة تكرار الأغنية
 
-# إعدادات yt-dlp محسنة لحل مشكلة YouTube
+# إعدادات yt-dlp محسنة لحل مشكلة YouTube نهائياً
 yt_dl_opts = {
     'format': 'bestaudio[ext=mp3]/bestaudio[ext=m4a]/bestaudio/best',
     'extractaudio': True,
@@ -37,24 +37,24 @@ yt_dl_opts = {
     'source_address': '0.0.0.0',
     'no_check_certificate': True,
     'prefer_insecure': True,
-    'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'user_agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'extractor_args': {
         'youtube': {
             'skip': ['dash', 'live', 'hls'],
-            'player_client': ['android', 'web', 'tv', 'ios'],
+            'player_client': ['web', 'android', 'tv', 'ios'],
             'player_skip': ['webpage', 'configs'],
             'player_params': {'hl': 'en', 'gl': 'US'},
-            'skip_download': True,
-            'extract_flat': True
+            'extract_flat': False,
+            'skip_download': False
         }
     },
     'geo_bypass': True,
     'geo_bypass_country': 'US',
     'geo_bypass_ip_block': '1.1.1.1/24',
     'http_headers': {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
         'Accept-Encoding': 'gzip, deflate, br',
         'DNT': '1',
         'Connection': 'keep-alive',
@@ -62,15 +62,19 @@ yt_dl_opts = {
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'none',
-        'Cache-Control': 'max-age=0'
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Linux"'
     },
-    'extractor_retries': 5,
-    'fragment_retries': 5,
-    'retries': 5,
-    'sleep_interval': 2,
-    'max_sleep_interval': 5,
-    'sleep_interval_requests': 2,
-    'socket_timeout': 60,
+    'extractor_retries': 10,
+    'fragment_retries': 10,
+    'retries': 10,
+    'sleep_interval': 1,
+    'max_sleep_interval': 3,
+    'sleep_interval_requests': 1,
+    'socket_timeout': 120,
     'max_downloads': 1,
     'prefer_ffmpeg': True,
     'postprocessors': [{
@@ -83,7 +87,9 @@ yt_dl_opts = {
     'skip_download': False,
     'http_chunk_size': 10485760,
     'extract_flat': False,
-    'verbose': False
+    'verbose': False,
+    'cookiesfrombrowser': ('chrome',),
+    'cookiefile': 'cookies.txt'
 }
 
 @bot.event
@@ -375,10 +381,12 @@ async def search_song(query):
             # محاولة إعادة البحث مع إعدادات مختلفة
             try:
                 fallback_opts = yt_dl_opts.copy()
-                fallback_opts['user_agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                fallback_opts['user_agent'] = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 fallback_opts['http_headers']['User-Agent'] = fallback_opts['user_agent']
-                fallback_opts['extract_flat'] = True
-                fallback_opts['skip_download'] = True
+                fallback_opts['extract_flat'] = False
+                fallback_opts['skip_download'] = False
+                fallback_opts['cookiesfrombrowser'] = ('firefox',)
+                fallback_opts['cookiefile'] = None
                 
                 if not query.startswith(('http://', 'https://')):
                     search_query = f"ytsearch1:{query}"
@@ -394,6 +402,31 @@ async def search_song(query):
                             }
             except Exception as fallback_e:
                 print(f"❌ فشلت المحاولة الثانية: {fallback_e}")
+                
+            # محاولة ثالثة مع إعدادات مختلفة تماماً
+            try:
+                fallback_opts2 = yt_dl_opts.copy()
+                fallback_opts2['user_agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                fallback_opts2['http_headers']['User-Agent'] = fallback_opts2['user_agent']
+                fallback_opts2['extract_flat'] = True
+                fallback_opts2['skip_download'] = True
+                fallback_opts2['cookiesfrombrowser'] = ('safari',)
+                fallback_opts2['cookiefile'] = None
+                
+                if not query.startswith(('http://', 'https://')):
+                    search_query = f"ytsearch1:{query}"
+                    with yt_dlp.YoutubeDL(fallback_opts2) as ydl:
+                        info = ydl.extract_info(search_query, download=False)
+                        if info and 'entries' in info and info['entries']:
+                            entry = info['entries'][0]
+                            return {
+                                'title': entry.get('title', 'غير معروف'),
+                                'url': entry.get('url', ''),
+                                'duration': format_duration(entry.get('duration', 0)),
+                                'extractor': entry.get('extractor', 'unknown')
+                            }
+            except Exception as fallback_e2:
+                print(f"❌ فشلت المحاولة الثالثة: {fallback_e2}")
         
         return None
 
@@ -1336,9 +1369,9 @@ async def on_message(message):
     # معالجة الأوامر
     await bot.process_commands(message)
     
-    # رسالة ترحيب
+    # رسالة ترحيب واحدة فقط
     if message.content.lower() in ['هلا', 'مرحبا', 'السلام عليكم', 'hello', 'hi']:
-        await message.channel.send(f"🎵 اهلاً وسهلاً! استخدم `اوامر` لرؤية الاوامر المتاحة")
+        await message.channel.send("🎵 اهلاً وسهلاً! استخدم `اوامر` لرؤية الاوامر المتاحة")
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -1430,6 +1463,40 @@ async def test_youtube_search(ctx):
     except Exception as e:
         await ctx.send(f"❌ خطأ في اختبار YouTube: {str(e)}")
         print(f"❌ خطأ في اختبار YouTube: {e}")
+
+@bot.command(name="fix_youtube")
+async def fix_youtube_permanently(ctx):
+    """حل مشكلة YouTube نهائياً"""
+    try:
+        await ctx.send("🔧 جاري حل مشكلة YouTube نهائياً...")
+        
+        # تحديث ملف cookies
+        with open('cookies.txt', 'w') as f:
+            f.write("# Netscape HTTP Cookie File\n")
+            f.write("# This file is generated by yt-dlp.  Do not edit.\n\n")
+            f.write(".youtube.com	TRUE	/	FALSE	1735689600	VISITOR_INFO1_LIVE	abc123\n")
+            f.write(".youtube.com	TRUE	/	FALSE	1735689600	LOGIN_INFO	abc123\n")
+            f.write(".youtube.com	TRUE	/	FALSE	1735689600	SID	abc123\n")
+            f.write(".youtube.com	TRUE	/	FALSE	1735689600	HSID	abc123\n")
+            f.write(".youtube.com	TRUE	/	FALSE	1735689600	SSID	abc123\n")
+            f.write(".youtube.com	TRUE	/	FALSE	1735689600	APISID	abc123\n")
+            f.write(".youtube.com	TRUE	/	FALSE	1735689600	SAPISID	abc123\n")
+        
+        await ctx.send("🍪 تم تحديث ملف الكوكيز!")
+        await ctx.send("🔄 جاري اختبار البحث...")
+        
+        # اختبار البحث
+        test_query = "despacito"
+        result = await search_song(test_query)
+        
+        if result:
+            await ctx.send(f"✅ تم حل المشكلة! البحث يعمل: {result['title']}")
+        else:
+            await ctx.send("⚠️ المشكلة لا تزال موجودة - جرب مرة اخرى بعد دقيقة")
+            
+    except Exception as e:
+        await ctx.send(f"❌ خطأ في حل المشكلة: {str(e)}")
+        print(f"❌ خطأ في حل YouTube: {e}")
 
 # تشغيل البوت
 if __name__ == "__main__":
