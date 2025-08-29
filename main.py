@@ -1611,13 +1611,13 @@ async def hi_command_english(ctx):
     """أمر ترحيب بالإنجليزية (اختصار)"""
     await ctx.send("🎵 Hi! Use `اوامر` to see available commands")
 
-# on_message مخصص بسيط جداً لحل مشكلة heartbeat
-@bot.event
-async def on_message(message):
-    """معالجة الرسائل - مبسط جداً لتجنب blocking"""
-    if message.author == bot.user:
-        return
-    await bot.process_commands(message)
+# إزالة on_message نهائياً لحل مشكلة heartbeat
+# @bot.event
+# async def on_message(message):
+#     """معالجة الرسائل - مبسط جداً لتجنب blocking"""
+#     if message.author == bot.user:
+#         return
+#     await bot.process_commands(message)
 
 # تشغيل البوت
 if __name__ == "__main__":
