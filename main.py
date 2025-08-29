@@ -1779,3 +1779,65 @@ async def youtube_nuclear_fix_command(ctx):
     except Exception as e:
         await ctx.send(f"❌ خطأ في الحل النووي: {str(e)}")
         print(f"❌ خطأ في الحل النووي: {e}")
+
+@bot.command(name="youtube_nuclear_final")
+async def youtube_nuclear_final(ctx, *, query="test song"):
+    """اختبار نووي نهائي لـ YouTube - لا يمكن أن يفشل!"""
+    try:
+        await ctx.send("☢️ **بدء الاختبار النووي النهائي لـ YouTube!**")
+        await ctx.send("🔍 جاري البحث بـ15 محاولة مختلفة...")
+        
+        async with asyncio.timeout(300):  # 5 دقائق timeout
+            result = await search_song(query)
+            
+            if result:
+                await ctx.send(f"✅ **نجح الاختبار النووي!**")
+                await ctx.send(f"🎵 **العنوان:** {result['title']}")
+                await ctx.send(f"⏱️ **المدة:** {result['duration']}")
+                await ctx.send(f"🔗 **المصدر:** {result['extractor']}")
+                await ctx.send(f"🌐 **الرابط:** {result['url'][:100]}...")
+                await ctx.send("🎉 **YouTube يعمل بشكل مثالي الآن!**")
+            else:
+                await ctx.send("❌ **فشل الاختبار النووي - المشكلة لا تزال موجودة**")
+                await ctx.send("🔧 **جاري تطبيق حل أكثر تقدماً...**")
+                
+                # محاولة أخيرة مع إعدادات خاصة جداً
+                try:
+                    special_opts = {
+                        'format': 'worst',
+                        'quiet': True,
+                        'no_warnings': True,
+                        'user_agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+                        'http_headers': {
+                            'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+                            'Accept': '*/*',
+                        },
+                        'extractor_args': {
+                            'youtube': {
+                                'player_client': ['android'],
+                            }
+                        },
+                        'cookiefile': None,
+                        'cookiesfrombrowser': None,
+                        'socket_timeout': 60,
+                        'retries': 5
+                    }
+                    
+                    search_query = f"ytsearch1:{query}"
+                    with yt_dlp.YoutubeDL(special_opts) as ydl:
+                        info = ydl.extract_info(search_query, download=False)
+                        if info and 'entries' in info and info['entries']:
+                            entry = info['entries'][0]
+                            await ctx.send("✅ **نجحت المحاولة الخاصة!**")
+                            await ctx.send(f"🎵 **العنوان:** {entry.get('title', 'غير معروف')}")
+                            return
+                    
+                    await ctx.send("❌ **فشلت جميع المحاولات - YouTube محظور تماماً**")
+                    
+                except Exception as e:
+                    await ctx.send(f"❌ **خطأ في المحاولة الخاصة:** {str(e)[:100]}")
+                    
+    except asyncio.TimeoutError:
+        await ctx.send("⏰ **انتهت مهلة الاختبار - الاختبار استغرق وقتاً طويلاً**")
+    except Exception as e:
+        await ctx.send(f"❌ **خطأ في الاختبار النووي:** {str(e)[:100]}")
