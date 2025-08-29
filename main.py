@@ -6,24 +6,26 @@ import os
 import ssl
 from config import *
 
-# إصلاح مشكلة SSL نهائي
+# إصلاح مشكلة SSL نهائي شامل
 os.environ['PYTHONHTTPSVERIFY'] = '0'
 os.environ['SSL_CERT_FILE'] = ''
 os.environ['SSL_CERT_DIR'] = ''
 os.environ['REQUESTS_CA_BUNDLE'] = ''
 os.environ['CURL_CA_BUNDLE'] = ''
+os.environ['SSL_CERT_VERIFY'] = '0'
+os.environ['SSL_VERIFY'] = '0'
+os.environ['SSL_VERIFY_PEER'] = '0'
+os.environ['SSL_VERIFY_HOSTNAME'] = '0'
+
+# تعطيل SSL نهائياً
 ssl._create_default_https_context = ssl._create_unverified_context
 
 # إنشاء سياق SSL مخصص
 ssl_context = ssl.create_default_context()
 ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
+ssl_context.set_ciphers('DEFAULT@SECLEVEL=0')
 ssl._create_default_https_context = lambda: ssl_context
-
-# تعطيل SSL نهائياً
-ssl._create_default_https_context = ssl._create_unverified_context
-ssl._create_default_https_context = lambda: ssl_context
-ssl._create_default_https_context = ssl._create_unverified_context
 
 # إعداد البوت
 intents = discord.Intents.all()
@@ -48,7 +50,7 @@ voice_clients = {}
 music_queues = {}
 loop_states = {} # إضافة متغير لتتبع حالة تكرار الأغنية
 
-# إعدادات yt-dlp مع إصلاح SSL نهائي
+# إعدادات yt-dlp مع إصلاح SSL نهائي شامل
 yt_dl_opts = {
     'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
@@ -120,6 +122,12 @@ yt_dl_opts = {
     'no_check_certificate': True,
     'nocheckcertificate': True,
     'cafile': None,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
     'nocheckcertificate': True,
     'no_check_certificate': True,
     'prefer_insecure': True,
@@ -368,8 +376,8 @@ async def add_to_queue(ctx, query, voice_channel, guild_id):
         await ctx.send(f"❌ خطأ في إضافة الأغنية: {str(e)}")
 
 async def search_song(query):
-    """البحث مع إصلاح SSL نهائي - يستخدم محاولة واحدة!"""
-    print(f"🔧 بدء البحث مع إصلاح SSL نهائي عن: {query}")
+    """البحث مع إصلاح SSL نهائي شامل - يستخدم محاولة واحدة!"""
+    print(f"🔧 بدء البحث مع إصلاح SSL نهائي شامل عن: {query}")
     
     try:
         print("🔄 المحاولة 1/1")
@@ -380,7 +388,7 @@ async def search_song(query):
         current_opts['http_headers'] = current_opts['http_headers'].copy()
         current_opts['http_headers']['User-Agent'] = current_opts['user_agent']
         
-        # إصلاح SSL نهائي
+        # إصلاح SSL نهائي شامل
         current_opts['nocheckcertificate'] = True
         current_opts['no_check_certificate'] = True
         current_opts['prefer_insecure'] = True
@@ -392,6 +400,11 @@ async def search_song(query):
         current_opts['prefer_insecure'] = True
         
         # إضافة إعدادات SSL إضافية
+        current_opts['nocheckcertificate'] = True
+        current_opts['no_check_certificate'] = True
+        current_opts['prefer_insecure'] = True
+        
+        # إضافة إعدادات SSL نهائية
         current_opts['nocheckcertificate'] = True
         current_opts['no_check_certificate'] = True
         current_opts['prefer_insecure'] = True
