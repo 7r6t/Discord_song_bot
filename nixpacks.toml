@@ -8,4 +8,4 @@ cmds = ["pip install --user --break-system-packages --no-cache-dir -r requiremen
 cmds = ["echo 'Build completed successfully!'", "pip list --user", "echo 'Ready to start!'"]
 
 [start]
-cmd = "python main.py"
+cmd = "python app.py"
