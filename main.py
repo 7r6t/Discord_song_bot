@@ -6,8 +6,12 @@ import os
 import ssl
 from config import *
 
-# إصلاح مشكلة SSL
+# إصلاح مشكلة SSL نهائي
 os.environ['PYTHONHTTPSVERIFY'] = '0'
+os.environ['SSL_CERT_FILE'] = ''
+os.environ['SSL_CERT_DIR'] = ''
+os.environ['REQUESTS_CA_BUNDLE'] = ''
+os.environ['CURL_CA_BUNDLE'] = ''
 ssl._create_default_https_context = ssl._create_unverified_context
 
 # إعداد البوت
@@ -68,13 +72,13 @@ yt_dl_opts = {
         'Sec-Fetch-Site': 'none',
         'Cache-Control': 'max-age=0'
     },
-    'extractor_retries': 3,
-    'fragment_retries': 3,
-    'retries': 3,
+    'extractor_retries': 2,
+    'fragment_retries': 2,
+    'retries': 2,
     'sleep_interval': 0,
     'max_sleep_interval': 0,
     'sleep_interval_requests': 0,
-    'socket_timeout': 20,
+    'socket_timeout': 15,
     'extractor_args': {
         'youtube': {
             'skip': ['dash', 'live'],
@@ -104,7 +108,7 @@ yt_dl_opts = {
     'prefer_insecure': True,
     'no_check_certificate': True,
     'nocheckcertificate': True,
-    'cafile': '/etc/ssl/certs/ca-certificates.crt',
+    'cafile': None,
     'nocheckcertificate': True,
     'no_check_certificate': True,
     'prefer_insecure': True
@@ -344,87 +348,57 @@ async def add_to_queue(ctx, query, voice_channel, guild_id):
         await ctx.send(f"❌ خطأ في إضافة الأغنية: {str(e)}")
 
 async def search_song(query):
-    """البحث مع إصلاح SSL نهائي - يستخدم 2 محاولات مختلفة!"""
+    """البحث مع إصلاح SSL نهائي - يستخدم محاولة واحدة!"""
     print(f"🔧 بدء البحث مع إصلاح SSL نهائي عن: {query}")
     
-    # قائمة user agents متنوعة
-    user_agents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-    ]
-    
-    # قائمة browsers للcookies
-    browsers = ['chrome']
-    
-    # محاولة البحث مع كل إعداد
-    for attempt in range(2):
-        try:
-            print(f"🔄 المحاولة {attempt + 1}/2")
-            
-            # إنشاء إعدادات مختلفة لكل محاولة
-            current_opts = yt_dl_opts.copy()
-            current_opts['user_agent'] = user_agents[attempt % len(user_agents)]
-            current_opts['http_headers'] = current_opts['http_headers'].copy()
-            current_opts['http_headers']['User-Agent'] = current_opts['user_agent']
-            
-            # إصلاح SSL نهائي لكل محاولة
-            current_opts['nocheckcertificate'] = True
-            current_opts['no_check_certificate'] = True
-            current_opts['prefer_insecure'] = True
-            current_opts['cafile'] = '/etc/ssl/certs/ca-certificates.crt'
-            
-            # تغيير browser للcookies
-            if attempt < len(browsers):
-                current_opts['cookiesfrombrowser'] = (browsers[attempt],)
-            else:
-                current_opts['cookiesfrombrowser'] = (browsers[attempt % len(browsers)],)
-            
-            # إعدادات خاصة للمحاولة الثانية
-            if attempt >= 1:
-                current_opts['extractor_args'] = {
-                    'youtube': {
-                        'skip': ['dash', 'live'],
-                        'player_client': ['android'],
-                        'player_skip': ['webpage'],
+    try:
+        print("🔄 المحاولة 1/1")
+        
+        # إنشاء إعدادات نهائية
+        current_opts = yt_dl_opts.copy()
+        current_opts['user_agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        current_opts['http_headers'] = current_opts['http_headers'].copy()
+        current_opts['http_headers']['User-Agent'] = current_opts['user_agent']
+        
+        # إصلاح SSL نهائي
+        current_opts['nocheckcertificate'] = True
+        current_opts['no_check_certificate'] = True
+        current_opts['prefer_insecure'] = True
+        current_opts['cafile'] = None
+        
+        # محاولة البحث
+        if query.startswith(('http://', 'https://')):
+            with yt_dlp.YoutubeDL(current_opts) as ydl:
+                info = ydl.extract_info(query, download=False)
+                if info:
+                    print(f"✅ نجحت المحاولة - رابط مباشر")
+                    return {
+                        'title': info.get('title', 'غير معروف'),
+                        'url': info.get('url', query),
+                        'duration': format_duration(info.get('duration', 0)),
+                        'extractor': info.get('extractor', 'unknown')
                     }
-                }
-                current_opts['cookiefile'] = None  # إزالة ملف cookies
-            
-            # محاولة البحث
-            if query.startswith(('http://', 'https://')):
-                with yt_dlp.YoutubeDL(current_opts) as ydl:
-                    info = ydl.extract_info(query, download=False)
-                    if info:
-                        print(f"✅ نجحت المحاولة {attempt + 1} - رابط مباشر")
-                        return {
-                            'title': info.get('title', 'غير معروف'),
-                            'url': info.get('url', query),
-                            'duration': format_duration(info.get('duration', 0)),
-                            'extractor': info.get('extractor', 'unknown')
-                        }
-            else:
-                # البحث بالكلمات
-                search_query = f"ytsearch1:{query}"
-                with yt_dlp.YoutubeDL(current_opts) as ydl:
-                    info = ydl.extract_info(search_query, download=False)
-                    if info and 'entries' in info and info['entries'] and info['entries'][0]:
-                        entry = info['entries'][0]
-                        print(f"✅ نجحت المحاولة {attempt + 1} - بحث بالكلمات")
-                        return {
-                            'title': entry.get('title', 'غير معروف'),
-                            'url': entry.get('url', ''),
-                            'duration': format_duration(entry.get('duration', 0)),
-                            'extractor': entry.get('extractor', 'unknown')
-                        }
-            
-        except Exception as e:
-            print(f"❌ فشلت المحاولة {attempt + 1}: {str(e)[:100]}...")
-            if attempt < 1:  # ليس المحاولة الأخيرة
-                await asyncio.sleep(3)  # انتظار أطول بين المحاولات
-            continue
-    
-    print("❌ فشلت جميع المحاولات الـ2!")
-    return None
+        else:
+            # البحث بالكلمات
+            search_query = f"ytsearch1:{query}"
+            with yt_dlp.YoutubeDL(current_opts) as ydl:
+                info = ydl.extract_info(search_query, download=False)
+                if info and 'entries' in info and info['entries'] and info['entries'][0]:
+                    entry = info['entries'][0]
+                    print(f"✅ نجحت المحاولة - بحث بالكلمات")
+                    return {
+                        'title': entry.get('title', 'غير معروف'),
+                        'url': entry.get('url', ''),
+                        'duration': format_duration(entry.get('duration', 0)),
+                        'extractor': entry.get('extractor', 'unknown')
+                    }
+        
+        print("❌ فشلت المحاولة!")
+        return None
+        
+    except Exception as e:
+        print(f"❌ خطأ في البحث: {str(e)[:100]}...")
+        return None
 
 def format_duration(duration):
     """تنسيق المدة"""
