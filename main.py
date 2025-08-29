@@ -1368,17 +1368,26 @@ async def show_bot_info(ctx):
 
 @bot.event
 async def on_message(message):
-    """معالجة جميع الرسائل"""
-    # تجاهل رسائل البوت
-    if message.author == bot.user:
-        return
-    
-    # معالجة الأوامر
-    await bot.process_commands(message)
-    
-    # رسالة ترحيب واحدة فقط
-    if message.content.lower() in ['هلا', 'مرحبا', 'السلام عليكم', 'hello', 'hi']:
-        await message.channel.send("🎵 اهلاً وسهلاً! استخدم `اوامر` لرؤية الاوامر المتاحة")
+    """معالجة جميع الرسائل - محسنة للأداء"""
+    try:
+        # تجاهل رسائل البوت
+        if message.author == bot.user:
+            return
+        
+        # معالجة الأوامر أولاً
+        await bot.process_commands(message)
+        
+        # رسالة ترحيب سريعة باستخدام create_task
+        content_lower = message.content.lower()
+        if content_lower in ['هلا', 'مرحبا', 'السلام عليكم', 'hello', 'hi']:
+            # استخدام create_task لتجنب blocking
+            asyncio.create_task(
+                message.channel.send("🎵 اهلاً وسهلاً! استخدم `اوامر` لرؤية الاوامر المتاحة")
+            )
+            
+    except Exception as e:
+        print(f"❌ خطأ في on_message: {e}")
+        # لا نريد أن نوقف البوت بسبب خطأ في رسالة واحدة
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -1588,6 +1597,27 @@ async def youtube_ultimate_fix(ctx):
     except Exception as e:
         await ctx.send(f"❌ خطأ في الحل النهائي: {str(e)}")
         print(f"❌ خطأ في الحل النهائي: {e}")
+
+@bot.command(name="heartbeat_test")
+async def heartbeat_test_command(ctx):
+    """اختبار استجابة البوت"""
+    try:
+        await ctx.send("💓 Heartbeat Test - البوت يستجيب بشكل طبيعي!")
+        print(f"💓 تم اختبار heartbeat من {ctx.author} في {ctx.guild.name}")
+    except Exception as e:
+        await ctx.send(f"❌ خطأ في اختبار heartbeat: {str(e)}")
+        print(f"❌ خطأ في اختبار heartbeat: {e}")
+
+@bot.command(name="ping_test")
+async def ping_test_command(ctx):
+    """اختبار سرعة الاستجابة"""
+    try:
+        latency = round(bot.latency * 1000)
+        await ctx.send(f"🏓 Pong! سرعة الاستجابة: {latency}ms")
+        print(f"🏓 تم اختبار ping من {ctx.author} في {ctx.guild.name}")
+    except Exception as e:
+        await ctx.send(f"❌ خطأ في اختبار ping: {str(e)}")
+        print(f"❌ خطأ في اختبار ping: {e}")
 
 # تشغيل البوت
 if __name__ == "__main__":
