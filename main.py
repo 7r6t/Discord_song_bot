@@ -1208,6 +1208,20 @@ async def show_bot_info(ctx):
     await ctx.send(embed=embed)
 
 @bot.event
+async def on_message(message):
+    """معالجة جميع الرسائل"""
+    # تجاهل رسائل البوت
+    if message.author == bot.user:
+        return
+    
+    # معالجة الأوامر
+    await bot.process_commands(message)
+    
+    # رسالة ترحيب
+    if message.content.lower() in ['هلا', 'مرحبا', 'السلام عليكم', 'hello', 'hi']:
+        await message.channel.send(f"🎵 أهلاً وسهلاً! استخدم `{DISCORD_PREFIX}أوامر` لرؤية الأوامر المتاحة")
+
+@bot.event
 async def on_command_error(ctx, error):
     """معالجة أخطاء الأوامر"""
     if isinstance(error, commands.CommandNotFound):
