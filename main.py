@@ -83,6 +83,7 @@ yt_dl_opts = {
         'preferredcodec': 'mp3',
         'preferredquality': '192',
     }],
+    'prefer_ffmpeg': False,  # تجنب الحاجة لffmpeg
     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'http_headers': {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -552,6 +553,43 @@ def format_duration(duration):
     seconds = int(duration % 60)
     return f"{minutes}:{seconds:02d}"
 
+async def check_ffmpeg():
+    """فحص وتثبيت ffmpeg"""
+    try:
+        import subprocess
+        result = subprocess.run(['ffmpeg', '-version'], capture_output=True, text=True)
+        if result.returncode == 0:
+            print("✅ ffmpeg مثبت ويعمل")
+            return True
+        else:
+            print("❌ ffmpeg غير مثبت")
+            return False
+    except FileNotFoundError:
+        print("❌ ffmpeg غير مثبت")
+        return False
+    except Exception as e:
+        print(f"❌ خطأ في فحص ffmpeg: {e}")
+        return False
+
+async def install_ffmpeg():
+    """تثبيت ffmpeg"""
+    try:
+        import subprocess
+        print("🔧 جاري تثبيت ffmpeg...")
+        
+        # تحديث النظام
+        subprocess.run(['apt-get', 'update'], check=True)
+        
+        # تثبيت ffmpeg
+        subprocess.run(['apt-get', 'install', '-y', 'ffmpeg'], check=True)
+        
+        print("✅ تم تثبيت ffmpeg بنجاح")
+        return True
+        
+    except Exception as e:
+        print(f"❌ فشل تثبيت ffmpeg: {e}")
+        return False
+
 async def reconnect_voice(guild_id, voice_channel):
     """إعادة الاتصال بالقناة الصوتية مع إصلاح خطأ 4006"""
     try:
@@ -566,11 +604,24 @@ async def reconnect_voice(guild_id, voice_channel):
         # انتظار قليلاً
         await asyncio.sleep(3)
         
-        # محاولة الاتصال الجديد
-        voice_client = await voice_channel.connect(timeout=30.0, self_deaf=True, self_mute=False)
-        voice_clients[guild_id] = voice_client
-        print(f"✅ تم إعادة الاتصال بنجاح: {voice_channel.name}")
-        return voice_client
+        # محاولة الاتصال الجديد مع إصلاح خطأ 4006
+        try:
+            voice_client = await voice_channel.connect(timeout=30.0, self_deaf=True, self_mute=False)
+            voice_clients[guild_id] = voice_client
+            print(f"✅ تم إعادة الاتصال بنجاح: {voice_channel.name}")
+            return voice_client
+        except discord.errors.ConnectionClosed as e:
+            if e.code == 4006:
+                print("🔧 خطأ 4006 - جاري إصلاحه...")
+                # انتظار أطول
+                await asyncio.sleep(10)
+                # محاولة ثانية
+                voice_client = await voice_channel.connect(timeout=60.0, self_deaf=True, self_mute=False)
+                voice_clients[guild_id] = voice_client
+                print(f"✅ تم إصلاح خطأ 4006: {voice_channel.name}")
+                return voice_client
+            else:
+                raise e
         
     except Exception as e:
         print(f"❌ فشل إعادة الاتصال: {e}")
@@ -582,6 +633,15 @@ async def play_next(ctx, guild_id, voice_channel):
         return
     
     try:
+        # فحص ffmpeg أولاً
+        if not await check_ffmpeg():
+            await ctx.send("🔧 ffmpeg غير مثبت - جاري تثبيته...")
+            if await install_ffmpeg():
+                await ctx.send("✅ تم تثبيت ffmpeg بنجاح!")
+            else:
+                await ctx.send("❌ فشل تثبيت ffmpeg!")
+                return
+        
         # الاتصال بالقناة الصوتية مع إصلاح خطأ 4006
         if guild_id not in voice_clients or not voice_clients[guild_id].is_connected():
             voice_client = await reconnect_voice(guild_id, voice_channel)
@@ -2008,6 +2068,15 @@ async def fix_voice_command(ctx):
         
         await ctx.send("🔧 جاري إصلاح مشاكل الصوت...")
         
+        # فحص ffmpeg أولاً
+        if not await check_ffmpeg():
+            await ctx.send("🔧 ffmpeg غير مثبت - جاري تثبيته...")
+            if await install_ffmpeg():
+                await ctx.send("✅ تم تثبيت ffmpeg بنجاح!")
+            else:
+                await ctx.send("❌ فشل تثبيت ffmpeg!")
+                return
+        
         # إعادة الاتصال
         voice_client = await reconnect_voice(guild_id, voice_channel)
         if voice_client:
@@ -2017,6 +2086,24 @@ async def fix_voice_command(ctx):
             
     except Exception as e:
         await ctx.send(f"❌ خطأ في إصلاح الصوت: {str(e)}")
+
+@bot.command(name="fix_ffmpeg")
+async def fix_ffmpeg_command(ctx):
+    """إصلاح ffmpeg"""
+    try:
+        await ctx.send("🔧 جاري فحص ffmpeg...")
+        
+        if await check_ffmpeg():
+            await ctx.send("✅ ffmpeg مثبت ويعمل!")
+        else:
+            await ctx.send("🔧 ffmpeg غير مثبت - جاري تثبيته...")
+            if await install_ffmpeg():
+                await ctx.send("✅ تم تثبيت ffmpeg بنجاح!")
+            else:
+                await ctx.send("❌ فشل تثبيت ffmpeg!")
+                
+    except Exception as e:
+        await ctx.send(f"❌ خطأ في إصلاح ffmpeg: {str(e)}")
 
 @bot.command(name="youtube_nuclear_final")
 async def youtube_nuclear_final(ctx, *, query="test song"):
