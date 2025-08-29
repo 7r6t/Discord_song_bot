@@ -103,7 +103,8 @@ yt_dl_opts = {
     'writeplaylistmetafiles': False,
     'prefer_insecure': True,
     'no_check_certificate': True,
-    'nocheckcertificate': True
+    'nocheckcertificate': True,
+    'cafile': '/etc/ssl/certs/ca-certificates.crt'
 }
 
 @bot.command(name="تشغيل")
@@ -340,25 +341,23 @@ async def add_to_queue(ctx, query, voice_channel, guild_id):
         await ctx.send(f"❌ خطأ في إضافة الأغنية: {str(e)}")
 
 async def search_song(query):
-    """البحث مع إصلاح SSL نهائي - يستخدم 5 محاولات مختلفة!"""
+    """البحث مع إصلاح SSL نهائي - يستخدم 3 محاولات مختلفة!"""
     print(f"🔧 بدء البحث مع إصلاح SSL نهائي عن: {query}")
     
     # قائمة user agents متنوعة
     user_agents = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0',
         'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
     ]
     
     # قائمة browsers للcookies
-    browsers = ['chrome', 'firefox', 'safari']
+    browsers = ['chrome', 'firefox']
     
     # محاولة البحث مع كل إعداد
-    for attempt in range(5):
+    for attempt in range(3):
         try:
-            print(f"🔄 المحاولة {attempt + 1}/5")
+            print(f"🔄 المحاولة {attempt + 1}/3")
             
             # إنشاء إعدادات مختلفة لكل محاولة
             current_opts = yt_dl_opts.copy()
@@ -370,6 +369,7 @@ async def search_song(query):
             current_opts['nocheckcertificate'] = True
             current_opts['no_check_certificate'] = True
             current_opts['prefer_insecure'] = True
+            current_opts['cafile'] = '/etc/ssl/certs/ca-certificates.crt'
             
             # تغيير browser للcookies
             if attempt < len(browsers):
@@ -378,7 +378,7 @@ async def search_song(query):
                 current_opts['cookiesfrombrowser'] = (browsers[attempt % len(browsers)],)
             
             # إعدادات خاصة لمحاولات مختلفة
-            if attempt >= 3:
+            if attempt >= 2:
                 current_opts['extractor_args'] = {
                     'youtube': {
                         'skip': ['dash', 'live'],
@@ -387,17 +387,6 @@ async def search_song(query):
                     }
                 }
                 current_opts['cookiefile'] = None  # إزالة ملف cookies
-            
-            if attempt >= 4:
-                current_opts['extractor_args'] = {
-                    'youtube': {
-                        'skip': ['dash', 'live', 'hls'],
-                        'player_client': ['web'],
-                        'player_skip': ['configs'],
-                    }
-                }
-                current_opts['cookiefile'] = None
-                current_opts['cookiesfrombrowser'] = None
             
             # محاولة البحث
             if query.startswith(('http://', 'https://')):
@@ -428,11 +417,11 @@ async def search_song(query):
             
         except Exception as e:
             print(f"❌ فشلت المحاولة {attempt + 1}: {str(e)[:100]}...")
-            if attempt < 4:  # ليس المحاولة الأخيرة
-                await asyncio.sleep(1)  # انتظار أطول بين المحاولات
+            if attempt < 2:  # ليس المحاولة الأخيرة
+                await asyncio.sleep(2)  # انتظار أطول بين المحاولات
             continue
     
-    print("❌ فشلت جميع المحاولات الـ5!")
+    print("❌ فشلت جميع المحاولات الـ3!")
     return None
 
 def format_duration(duration):
