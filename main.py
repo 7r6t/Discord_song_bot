@@ -20,6 +20,11 @@ ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 ssl._create_default_https_context = lambda: ssl_context
 
+# تعطيل SSL نهائياً
+ssl._create_default_https_context = ssl._create_unverified_context
+ssl._create_default_https_context = lambda: ssl_context
+ssl._create_default_https_context = ssl._create_unverified_context
+
 # إعداد البوت
 intents = discord.Intents.all()
 intents.message_content = True  # إضافة intent للرسائل
@@ -115,6 +120,12 @@ yt_dl_opts = {
     'no_check_certificate': True,
     'nocheckcertificate': True,
     'cafile': None,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
+    'nocheckcertificate': True,
+    'no_check_certificate': True,
+    'prefer_insecure': True,
     'nocheckcertificate': True,
     'no_check_certificate': True,
     'prefer_insecure': True,
@@ -376,6 +387,11 @@ async def search_song(query):
         current_opts['cafile'] = None
         
         # إضافة إعدادات SSL متقدمة
+        current_opts['nocheckcertificate'] = True
+        current_opts['no_check_certificate'] = True
+        current_opts['prefer_insecure'] = True
+        
+        # إضافة إعدادات SSL إضافية
         current_opts['nocheckcertificate'] = True
         current_opts['no_check_certificate'] = True
         current_opts['prefer_insecure'] = True
