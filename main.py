@@ -1306,11 +1306,7 @@ async def ping_simple_command(ctx):
     await ctx.send("🏓 Pong! البوت يعمل!")
     print(f"🏓 تم تنفيذ أمر ping بسيط من {ctx.author} في {ctx.guild.name}")
 
-@bot.command(name="ping")
-async def ping_simple(ctx):
-    """اختبار بسيط للسرعة (اختصار)"""
-    await ctx.send("🏓 Pong! البوت يعمل!")
-    print(f"🏓 تم تنفيذ أمر ping من {ctx.author} في {ctx.guild.name}")
+
 
 @bot.command(name="hello")
 async def hello_command(ctx):
