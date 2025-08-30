@@ -56,7 +56,8 @@ bot = commands.Bot(
     max_concurrency=10,  # أقصى عدد أوامر متزامنة
     case_insensitive=True,  # تجاهل حالة الأحرف
     voice_timeout=300.0,  # timeout للصوت
-    max_voice_retries=10  # أقصى عدد محاولات للصوت
+    max_voice_retries=10,  # أقصى عدد محاولات للصوت
+    heartbeat_timeout=60.0  # timeout للنبض
 )
 
 # متغيرات عامة
@@ -505,7 +506,7 @@ async def search_song_aiohttp(query):
         from urllib.parse import quote
         
         # إعدادات aiohttp بدون SSL
-        connector = aiohttp.TCPConnector(ssl=False, verify_ssl=False)
+        connector = aiohttp.TCPConnector(ssl=False)
         
         # إضافة headers إضافية
         headers = {
@@ -518,36 +519,40 @@ async def search_song_aiohttp(query):
         }
         
         async with aiohttp.ClientSession(connector=connector, headers=headers) as session:
-            if query.startswith(('http://', 'https://')):
-                # رابط مباشر
-                async with session.get(query, timeout=aiohttp.ClientTimeout(total=20)) as response:
-                    if response.status == 200:
-                        return {
-                            'title': 'رابط مباشر',
-                            'url': query,
-                            'duration': 'غير معروف',
-                            'extractor': 'direct'
-                        }
-            else:
-                # البحث بالكلمات
-                search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
-                async with session.get(search_url, timeout=aiohttp.ClientTimeout(total=20)) as response:
-                    if response.status == 200:
-                        # استخراج أول نتيجة من HTML
-                        import re
-                        text = await response.text()
-                        video_pattern = r'watch\?v=([a-zA-Z0-9_-]{11})'
-                        matches = re.findall(video_pattern, text)
-                        
-                        if matches:
-                            video_id = matches[0]
-                            video_url = f"https://www.youtube.com/watch?v={video_id}"
+            try:
+                if query.startswith(('http://', 'https://')):
+                    # رابط مباشر
+                    async with session.get(query, timeout=aiohttp.ClientTimeout(total=20)) as response:
+                        if response.status == 200:
                             return {
-                                'title': f'نتيجة بحث: {query}',
-                                'url': video_url,
+                                'title': 'رابط مباشر',
+                                'url': query,
                                 'duration': 'غير معروف',
-                                'extractor': 'youtube_search'
+                                'extractor': 'direct'
                             }
+                else:
+                    # البحث بالكلمات
+                    search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
+                    async with session.get(search_url, timeout=aiohttp.ClientTimeout(total=20)) as response:
+                        if response.status == 200:
+                            # استخراج أول نتيجة من HTML
+                            import re
+                            text = await response.text()
+                            video_pattern = r'watch\?v=([a-zA-Z0-9_-]{11})'
+                            matches = re.findall(video_pattern, text)
+                            
+                            if matches:
+                                video_id = matches[0]
+                                video_url = f"https://www.youtube.com/watch?v={video_id}"
+                                return {
+                                    'title': f'نتيجة بحث: {query}',
+                                    'url': video_url,
+                                    'duration': 'غير معروف',
+                                    'extractor': 'youtube_search'
+                                }
+            except Exception as e:
+                print(f"❌ خطأ في aiohttp: {str(e)[:100]}...")
+                return None
         
         print("❌ فشل البحث باستخدام aiohttp")
         return None
@@ -583,36 +588,40 @@ async def search_song_requests(query):
             'Upgrade-Insecure-Requests': '1'
         }
         
-        if query.startswith(('http://', 'https://')):
-            # رابط مباشر
-            response = session.get(query, timeout=15, headers=headers)
-            if response.status_code == 200:
-                return {
-                    'title': 'رابط مباشر',
-                    'url': query,
-                    'duration': 'غير معروف',
-                    'extractor': 'direct'
-                }
-        else:
-            # البحث بالكلمات
-            search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
-            response = session.get(search_url, timeout=15, headers=headers)
-            
-            if response.status_code == 200:
-                # استخراج أول نتيجة من HTML
-                import re
-                video_pattern = r'watch\?v=([a-zA-Z0-9_-]{11})'
-                matches = re.findall(video_pattern, response.text)
-                
-                if matches:
-                    video_id = matches[0]
-                    video_url = f"https://www.youtube.com/watch?v={video_id}"
+        try:
+            if query.startswith(('http://', 'https://')):
+                # رابط مباشر
+                response = session.get(query, timeout=15, headers=headers)
+                if response.status_code == 200:
                     return {
-                        'title': f'نتيجة بحث: {query}',
-                        'url': video_url,
+                        'title': 'رابط مباشر',
+                        'url': query,
                         'duration': 'غير معروف',
-                        'extractor': 'youtube_search'
+                        'extractor': 'direct'
                     }
+            else:
+                # البحث بالكلمات
+                search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
+                response = session.get(search_url, timeout=15, headers=headers)
+                
+                if response.status_code == 200:
+                    # استخراج أول نتيجة من HTML
+                    import re
+                    video_pattern = r'watch\?v=([a-zA-Z0-9_-]{11})'
+                    matches = re.findall(video_pattern, response.text)
+                    
+                    if matches:
+                        video_id = matches[0]
+                        video_url = f"https://www.youtube.com/watch?v={video_id}"
+                        return {
+                            'title': f'نتيجة بحث: {query}',
+                            'url': video_url,
+                            'duration': 'غير معروف',
+                            'extractor': 'youtube_search'
+                        }
+        except Exception as e:
+            print(f"❌ خطأ في requests: {str(e)[:100]}...")
+            return None
         
         print("❌ فشل البحث باستخدام requests")
         return None
