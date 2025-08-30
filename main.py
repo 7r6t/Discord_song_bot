@@ -55,8 +55,8 @@ bot = commands.Bot(
     command_timeout=60,  # timeout للأوامر
     max_concurrency=10,  # أقصى عدد أوامر متزامنة
     case_insensitive=True,  # تجاهل حالة الأحرف
-    voice_timeout=120.0,  # timeout للصوت
-    max_voice_retries=5  # أقصى عدد محاولات للصوت
+    voice_timeout=300.0,  # timeout للصوت
+    max_voice_retries=10  # أقصى عدد محاولات للصوت
 )
 
 # متغيرات عامة
@@ -715,6 +715,73 @@ async def restart_bot():
     except Exception as e:
         print(f"❌ فشل إعادة تشغيل البوت: {e}")
 
+async def reconnect_voice_magic(guild_id, voice_channel):
+    """إعادة الاتصال بالقناة الصوتية مع إصلاح خطأ 4006 - الحل السحري"""
+    try:
+        # فصل الاتصال القديم إذا كان موجوداً
+        if guild_id in voice_clients and voice_clients[guild_id].is_connected():
+            try:
+                await voice_clients[guild_id].disconnect()
+                print(f"✅ تم فصل الاتصال القديم: {voice_channel.name}")
+            except:
+                pass
+        
+        # انتظار أطول
+        await asyncio.sleep(120)
+        
+        # محاولة الاتصال الجديد مع إصلاح خطأ 4006
+        try:
+            # إعدادات خاصة لتجنب خطأ 4006
+            voice_client = await voice_channel.connect(
+                timeout=180.0, 
+                self_deaf=True, 
+                self_mute=False,
+                reconnect=True  # إعادة اتصال تلقائية
+            )
+            voice_clients[guild_id] = voice_client
+            print(f"✅ تم إعادة الاتصال بنجاح: {voice_channel.name}")
+            return voice_client
+        except discord.errors.ConnectionClosed as e:
+            if e.code == 4006:
+                print("🔧 خطأ 4006 - جاري إصلاحه...")
+                # انتظار أطول
+                await asyncio.sleep(180)
+                # محاولة ثانية مع إعدادات مختلفة
+                try:
+                    voice_client = await voice_channel.connect(
+                        timeout=300.0, 
+                        self_deaf=True, 
+                        self_mute=False,
+                        reconnect=True
+                    )
+                    voice_clients[guild_id] = voice_client
+                    print(f"✅ تم إصلاح خطأ 4006: {voice_channel.name}")
+                    return voice_client
+                except Exception as e2:
+                    print(f"❌ فشلت المحاولة الثانية: {e2}")
+                    # محاولة ثالثة مع إعدادات بسيطة
+                    try:
+                        voice_client = await voice_channel.connect(
+                            timeout=360.0,
+                            self_deaf=True,
+                            self_mute=False
+                        )
+                        voice_clients[guild_id] = voice_client
+                        print(f"✅ نجحت المحاولة الثالثة: {voice_channel.name}")
+                        return voice_client
+                    except Exception as e3:
+                        print(f"❌ فشلت المحاولة الثالثة: {e3}")
+                        # حل أخير: إعادة تشغيل البوت
+                        print("🔄 تطبيق الحل الأخير: إعادة تشغيل البوت...")
+                        await restart_bot()
+                        return None
+            else:
+                raise e
+        
+    except Exception as e:
+        print(f"❌ فشل إعادة الاتصال: {e}")
+        return None
+
 async def reconnect_voice_super(guild_id, voice_channel):
     """إعادة الاتصال بالقناة الصوتية مع إصلاح خطأ 4006 - الحل الخارق"""
     try:
@@ -1063,7 +1130,7 @@ async def play_next(ctx, guild_id, voice_channel):
         
         # الاتصال بالقناة الصوتية مع إصلاح خطأ 4006
         if guild_id not in voice_clients or not voice_clients[guild_id].is_connected():
-            voice_client = await reconnect_voice_super(guild_id, voice_channel)
+            voice_client = await reconnect_voice_magic(guild_id, voice_channel)
             if not voice_client:
                 await ctx.send("❌ فشل الاتصال بالقناة الصوتية!")
                 return
@@ -2493,7 +2560,7 @@ async def fix_voice_command(ctx):
             await install_ffmpeg()
         
         # إعادة الاتصال
-        voice_client = await reconnect_voice_super(guild_id, voice_channel)
+        voice_client = await reconnect_voice_magic(guild_id, voice_channel)
         if voice_client:
             await ctx.send("✅ تم إصلاح الصوت بنجاح!")
         else:
