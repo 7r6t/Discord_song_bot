@@ -508,9 +508,19 @@ async def search_song_requests(query):
         import urllib3
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         
+        # إضافة headers إضافية
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-us,en;q=0.5',
+            'Accept-Encoding': 'gzip,deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        }
+        
         if query.startswith(('http://', 'https://')):
             # رابط مباشر
-            response = session.get(query, timeout=10)
+            response = session.get(query, timeout=15, headers=headers)
             if response.status_code == 200:
                 return {
                     'title': 'رابط مباشر',
@@ -521,7 +531,7 @@ async def search_song_requests(query):
         else:
             # البحث بالكلمات
             search_url = f"https://www.youtube.com/results?search_query={quote(query)}"
-            response = session.get(search_url, timeout=10)
+            response = session.get(search_url, timeout=15, headers=headers)
             
             if response.status_code == 200:
                 # استخراج أول نتيجة من HTML
@@ -584,16 +594,46 @@ async def check_ffmpeg_silent():
         return False
 
 async def install_ffmpeg():
-    """تثبيت ffmpeg - سريع"""
+    """تثبيت ffmpeg - سريع مع مصادر متعددة"""
     try:
         import subprocess
         print("🔧 جاري تثبيت ffmpeg...")
         
-        # تثبيت ffmpeg مباشرة بدون تحديث
-        subprocess.run(['apt-get', 'install', '-y', 'ffmpeg'], check=True, timeout=60)
+        # محاولة 1: تثبيت ffmpeg مباشرة
+        try:
+            subprocess.run(['apt-get', 'install', '-y', 'ffmpeg'], check=True, timeout=60)
+            print("✅ تم تثبيت ffmpeg بنجاح")
+            return True
+        except:
+            pass
         
-        print("✅ تم تثبيت ffmpeg بنجاح")
-        return True
+        # محاولة 2: تحديث النظام أولاً
+        try:
+            subprocess.run(['apt-get', 'update'], check=True, timeout=120)
+            subprocess.run(['apt-get', 'install', '-y', 'ffmpeg'], check=True, timeout=60)
+            print("✅ تم تثبيت ffmpeg بنجاح")
+            return True
+        except:
+            pass
+        
+        # محاولة 3: تثبيت من snap
+        try:
+            subprocess.run(['snap', 'install', 'ffmpeg'], check=True, timeout=120)
+            print("✅ تم تثبيت ffmpeg من snap بنجاح")
+            return True
+        except:
+            pass
+        
+        # محاولة 4: تثبيت من flatpak
+        try:
+            subprocess.run(['flatpak', 'install', '-y', 'org.freedesktop.Platform.ffmpeg'], check=True, timeout=120)
+            print("✅ تم تثبيت ffmpeg من flatpak بنجاح")
+            return True
+        except:
+            pass
+        
+        print("❌ فشل تثبيت ffmpeg من جميع المصادر")
+        return False
         
     except Exception as e:
         print(f"❌ فشل تثبيت ffmpeg: {e}")
@@ -609,6 +649,73 @@ async def restart_bot():
         os.execv(sys.executable, ['python'] + sys.argv)
     except Exception as e:
         print(f"❌ فشل إعادة تشغيل البوت: {e}")
+
+async def reconnect_voice_final(guild_id, voice_channel):
+    """إعادة الاتصال بالقناة الصوتية مع إصلاح خطأ 4006 - الحل النهائي النهائي"""
+    try:
+        # فصل الاتصال القديم إذا كان موجوداً
+        if guild_id in voice_clients and voice_clients[guild_id].is_connected():
+            try:
+                await voice_clients[guild_id].disconnect()
+                print(f"✅ تم فصل الاتصال القديم: {voice_channel.name}")
+            except:
+                pass
+        
+        # انتظار أطول
+        await asyncio.sleep(30)
+        
+        # محاولة الاتصال الجديد مع إصلاح خطأ 4006
+        try:
+            # إعدادات خاصة لتجنب خطأ 4006
+            voice_client = await voice_channel.connect(
+                timeout=90.0, 
+                self_deaf=True, 
+                self_mute=False,
+                reconnect=True  # إعادة اتصال تلقائية
+            )
+            voice_clients[guild_id] = voice_client
+            print(f"✅ تم إعادة الاتصال بنجاح: {voice_channel.name}")
+            return voice_client
+        except discord.errors.ConnectionClosed as e:
+            if e.code == 4006:
+                print("🔧 خطأ 4006 - جاري إصلاحه...")
+                # انتظار أطول
+                await asyncio.sleep(45)
+                # محاولة ثانية مع إعدادات مختلفة
+                try:
+                    voice_client = await voice_channel.connect(
+                        timeout=150.0, 
+                        self_deaf=True, 
+                        self_mute=False,
+                        reconnect=True
+                    )
+                    voice_clients[guild_id] = voice_client
+                    print(f"✅ تم إصلاح خطأ 4006: {voice_channel.name}")
+                    return voice_client
+                except Exception as e2:
+                    print(f"❌ فشلت المحاولة الثانية: {e2}")
+                    # محاولة ثالثة مع إعدادات بسيطة
+                    try:
+                        voice_client = await voice_channel.connect(
+                            timeout=200.0,
+                            self_deaf=True,
+                            self_mute=False
+                        )
+                        voice_clients[guild_id] = voice_client
+                        print(f"✅ نجحت المحاولة الثالثة: {voice_channel.name}")
+                        return voice_client
+                    except Exception as e3:
+                        print(f"❌ فشلت المحاولة الثالثة: {e3}")
+                        # حل أخير: إعادة تشغيل البوت
+                        print("🔄 تطبيق الحل الأخير: إعادة تشغيل البوت...")
+                        await restart_bot()
+                        return None
+            else:
+                raise e
+        
+    except Exception as e:
+        print(f"❌ فشل إعادة الاتصال: {e}")
+        return None
 
 async def reconnect_voice_ultimate(guild_id, voice_channel):
     """إعادة الاتصال بالقناة الصوتية مع إصلاح خطأ 4006 - الحل النهائي"""
@@ -824,7 +931,7 @@ async def play_next(ctx, guild_id, voice_channel):
         
         # الاتصال بالقناة الصوتية مع إصلاح خطأ 4006
         if guild_id not in voice_clients or not voice_clients[guild_id].is_connected():
-            voice_client = await reconnect_voice_ultimate(guild_id, voice_channel)
+            voice_client = await reconnect_voice_final(guild_id, voice_channel)
             if not voice_client:
                 await ctx.send("❌ فشل الاتصال بالقناة الصوتية!")
                 return
@@ -2254,7 +2361,7 @@ async def fix_voice_command(ctx):
             await install_ffmpeg()
         
         # إعادة الاتصال
-        voice_client = await reconnect_voice_ultimate(guild_id, voice_channel)
+        voice_client = await reconnect_voice_final(guild_id, voice_channel)
         if voice_client:
             await ctx.send("✅ تم إصلاح الصوت بنجاح!")
         else:
