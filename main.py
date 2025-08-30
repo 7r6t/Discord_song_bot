@@ -57,7 +57,10 @@ bot = commands.Bot(
     case_insensitive=True,  # تجاهل حالة الأحرف
     voice_timeout=300.0,  # timeout للصوت
     max_voice_retries=10,  # أقصى عدد محاولات للصوت
-    heartbeat_timeout=60.0  # timeout للنبض
+    heartbeat_timeout=60.0,  # timeout للنبض
+    max_messages=5000,  # تقليل الرسائل المحفوظة
+    chunk_guilds_at_startup=False,  # عدم تحميل السيرفرات عند البداية
+    enable_debug_events=False  # تعطيل الأحداث التجريبية
 )
 
 # متغيرات عامة
@@ -385,17 +388,15 @@ async def add_to_queue(ctx, query, voice_channel, guild_id):
     try:
         await ctx.send(f"🔍 جاري البحث عن: {query}...")
         
-        # البحث عن الأغنية
-        song_info = await search_song(query)
+        # البحث عن الأغنية - تجنب yt-dlp بسبب SSL
+        print("🔧 بدء البحث مع تجنب yt-dlp...")
+        song_info = await search_song_aiohttp(query)  # أول محاولة مع aiohttp
         if not song_info:
-            # محاولة ثانية باستخدام aiohttp
-            print("🔄 محاولة ثانية باستخدام aiohttp...")
-            song_info = await search_song_aiohttp(query)
-            
+            print("🔄 محاولة ثانية باستخدام requests...")
+            song_info = await search_song_requests(query)  # محاولة ثانية مع requests
         if not song_info:
-            # محاولة ثالثة باستخدام requests
-            print("🔄 محاولة ثالثة باستخدام requests...")
-            song_info = await search_song_requests(query)
+            print("🔄 محاولة أخيرة باستخدام yt-dlp...")
+            song_info = await search_song(query)  # محاولة أخيرة مع yt-dlp
             
         if not song_info:
             await ctx.send("❌ لم يتم العثور على الأغنية!")
@@ -558,7 +559,7 @@ async def search_song_aiohttp(query):
         return None
         
     except Exception as e:
-        print(f"❌ خطأ في البحث باستخدام aiohttp: {str(e)[:100]}...")
+        print(f"❌ خطأ عام في aiohttp: {e}")
         return None
 
 async def search_song_requests(query):
@@ -732,8 +733,16 @@ async def reconnect_voice_magic(guild_id, voice_channel):
             try:
                 await voice_clients[guild_id].disconnect()
                 print(f"✅ تم فصل الاتصال القديم: {voice_channel.name}")
-            except:
-                pass
+                # انتظار إضافي لإغلاق الاتصال
+                await asyncio.sleep(5)
+            except Exception as e:
+                print(f"⚠️ خطأ في فصل الاتصال: {e}")
+                # محاولة إغلاق قسري
+                try:
+                    voice_clients[guild_id].cleanup()
+                    del voice_clients[guild_id]
+                except:
+                    pass
         
         # انتظار أطول
         await asyncio.sleep(120)
@@ -1145,6 +1154,20 @@ async def play_next(ctx, guild_id, voice_channel):
                 return
         else:
             voice_client = voice_clients[guild_id]
+            # التحقق من حالة الاتصال
+            try:
+                if not voice_client.is_connected():
+                    print("⚠️ الاتصال غير نشط - إعادة الاتصال...")
+                    voice_client = await reconnect_voice_magic(guild_id, voice_channel)
+                    if not voice_client:
+                        await ctx.send("❌ فشل في إعادة الاتصال بالقناة الصوتية!")
+                        return
+            except Exception as e:
+                print(f"⚠️ خطأ في فحص الاتصال: {e}")
+                voice_client = await reconnect_voice_magic(guild_id, voice_channel)
+                if not voice_client:
+                    await ctx.send("❌ فشل في إعادة الاتصال بالقناة الصوتية!")
+                    return
         
         # الحصول على الأغنية التالية
         song = music_queues[guild_id].pop(0)
@@ -2303,6 +2326,63 @@ async def hi_command_english(ctx):
     """أمر ترحيب بالإنجليزية (اختصار)"""
     await ctx.send("🎵 Hi! Use `اوامر` to see available commands")
 
+# إضافة on_ready لتنظيف الاتصالات
+@bot.event
+async def on_ready():
+    print(f"✅ {bot.user} متصل و جاهز!")
+    print(f"🌐 منصة الاستضافة: {get_hosting_platform()}")
+    print("🎵 البوت جاهز لتشغيل الموسيقى!")
+    
+    # تنظيف الاتصالات القديمة
+    try:
+        voice_clients.clear()
+        print("🧹 تم تنظيف جميع الاتصالات الصوتية القديمة")
+    except Exception as e:
+        print(f"⚠️ خطأ في تنظيف الاتصالات: {e}")
+
+@bot.event
+async def on_voice_state_update(member, before, after):
+    """معالجة تغييرات حالة الصوت مع تنظيف الاتصالات"""
+    if member.bot:
+        return
+    
+    guild_id = member.guild.id
+    
+    # إذا غادر المستخدم القناة الصوتية
+    if before.channel and not after.channel:
+        if guild_id in voice_clients and voice_clients[guild_id].is_connected():
+            # التحقق من عدد المستخدمين المتبقين
+            remaining_members = len([m for m in before.channel.members if not m.bot])
+            
+            if remaining_members == 0:
+                # لا يوجد مستخدمين - إيقاف الموسيقى والخروج
+                try:
+                    voice_clients[guild_id].stop()
+                    await voice_clients[guild_id].disconnect()
+                    del voice_clients[guild_id]
+                    print(f"👋 غادر جميع المستخدمين - تم الخروج من: {before.channel.name}")
+                except Exception as e:
+                    print(f"❌ خطأ في الخروج التلقائي: {e}")
+    
+    # إذا دخل المستخدم لقناة صوتية
+    elif not before.channel and after.channel:
+        print(f"👋 دخل {member.display_name} إلى: {after.channel.name}")
+        
+    # تنظيف الاتصالات غير النشطة
+    try:
+        for gid in list(voice_clients.keys()):
+            if gid in voice_clients and voice_clients[gid].is_connected():
+                try:
+                    if not voice_clients[gid].is_playing() and not voice_clients[gid].is_paused():
+                        # إغلاق الاتصالات غير النشطة
+                        await voice_clients[gid].disconnect()
+                        del voice_clients[gid]
+                        print(f"🧹 تم تنظيف اتصال غير نشط: {gid}")
+                except Exception as e:
+                    print(f"⚠️ خطأ في تنظيف الاتصال: {e}")
+    except Exception as e:
+        print(f"⚠️ خطأ في تنظيف الاتصالات: {e}")
+
 # إزالة on_message نهائياً لحل مشكلة heartbeat
 # @bot.event
 # async def on_message(message):
@@ -2574,6 +2654,19 @@ async def fix_voice_command(ctx):
             await ctx.send("✅ تم إصلاح الصوت بنجاح!")
         else:
             await ctx.send("❌ فشل إصلاح الصوت!")
+            
+        # تنظيف الاتصالات القديمة
+        try:
+            for gid in list(voice_clients.keys()):
+                if gid != guild_id and voice_clients[gid].is_connected():
+                    try:
+                        await voice_clients[gid].disconnect()
+                        del voice_clients[gid]
+                        print(f"🧹 تم تنظيف اتصال قديم: {gid}")
+                    except:
+                        pass
+        except Exception as e:
+            print(f"⚠️ خطأ في تنظيف الاتصالات: {e}")
             
     except Exception as e:
         await ctx.send(f"❌ خطأ في إصلاح الصوت: {str(e)}")
