@@ -47,9 +47,9 @@ bot = commands.Bot(
     command_prefix=DISCORD_PREFIX, 
     intents=intents,
     help_command=None,  # تعطيل help command المدمج
-    max_messages=10000,  # زيادة حد الرسائل
-    chunk_guilds_at_startup=False,  # تعطيل chunk guilds
-    enable_debug_events=False,  # تعطيل debug events
+    max_messages=5000,  # تقليل الرسائل المحفوظة
+    chunk_guilds_at_startup=False,  # عدم تحميل السيرفرات عند البداية
+    enable_debug_events=False,  # تعطيل الأحداث التجريبية
     status=discord.Status.online,  # تعيين الحالة
     activity=discord.Game(name="🎵 استمع للموسيقى"),  # تعيين النشاط
     command_timeout=60,  # timeout للأوامر
@@ -57,10 +57,7 @@ bot = commands.Bot(
     case_insensitive=True,  # تجاهل حالة الأحرف
     voice_timeout=300.0,  # timeout للصوت
     max_voice_retries=10,  # أقصى عدد محاولات للصوت
-    heartbeat_timeout=60.0,  # timeout للنبض
-    max_messages=5000,  # تقليل الرسائل المحفوظة
-    chunk_guilds_at_startup=False,  # عدم تحميل السيرفرات عند البداية
-    enable_debug_events=False  # تعطيل الأحداث التجريبية
+    heartbeat_timeout=60.0  # timeout للنبض
 )
 
 # متغيرات عامة
